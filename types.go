@@ -2431,32 +2431,32 @@ type ChatMember struct {
 	// True, if the user is allowed to send audios
 	//
 	// optional
-	CanSendAudios bool
+	CanSendAudios bool `json:"can_send_audios,omitempty"`
 	// CanSendDocuments restricted only.
 	// True, if the user is allowed to send documents
 	//
 	// optional
-	CanSendDocuments bool
+	CanSendDocuments bool `json:"can_send_documents,omitempty"`
 	// CanSendPhotos is restricted only.
 	// True, if the user is allowed to send photos
 	//
 	// optional
-	CanSendPhotos bool
+	CanSendPhotos bool `json:"can_send_photos,omitempty"`
 	// CanSendVideos restricted only.
 	// True, if the user is allowed to send videos
 	//
 	// optional
-	CanSendVideos bool
+	CanSendVideos bool `json:"can_send_videos,omitempty"`
 	// CanSendVideoNotes restricted only.
 	// True, if the user is allowed to send video notes
 	//
 	// optional
-	CanSendVideoNotes bool
+	CanSendVideoNotes bool `json:"can_send_video_notes,omitempty"`
 	// CanSendVoiceNotes restricted only.
 	// True, if the user is allowed to send voice notes
 	//
 	// optional
-	CanSendVoiceNotes bool
+	CanSendVoiceNotes bool `json:"can_send_voice_notes,omitempty"`
 	// CanSendPolls restricted only.
 	// True, if the user is allowed to send polls
 	//
@@ -2563,27 +2563,27 @@ type ChatPermissions struct {
 	// CanSendAudios is true, if the user is allowed to send audios
 	//
 	// optional
-	CanSendAudios bool
+	CanSendAudios bool `json:"can_send_audios,omitempty"`
 	// CanSendDocuments is true, if the user is allowed to send documents
 	//
 	// optional
-	CanSendDocuments bool
+	CanSendDocuments bool `json:"can_send_documents,omitempty"`
 	// CanSendPhotos is true, if the user is allowed to send photos
 	//
 	// optional
-	CanSendPhotos bool
+	CanSendPhotos bool `json:"can_send_photos,omitempty"`
 	// CanSendVideos is true, if the user is allowed to send videos
 	//
 	// optional
-	CanSendVideos bool
+	CanSendVideos bool `json:"can_send_videos,omitempty"`
 	// CanSendVideoNotes is true, if the user is allowed to send video notes
 	//
 	// optional
-	CanSendVideoNotes bool
+	CanSendVideoNotes bool `json:"can_send_video_notes,omitempty"`
 	// CanSendVoiceNotes is true, if the user is allowed to send voice notes
 	//
 	// optional
-	CanSendVoiceNotes bool
+	CanSendVoiceNotes bool `json:"can_send_voice_notes,omitempty"`
 	// CanSendPolls is true, if the user is allowed to send polls, implies
 	// can_send_messages
 	//
