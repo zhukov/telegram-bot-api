@@ -1157,10 +1157,12 @@ type MessageOrigin struct {
 	// SenderUserName "hidden_user" only.
 	// Name of the user that sent the message originally
 	SenderUserName string `json:"sender_user_name,omitempty"`
-	// SenderChat "chat" and "channel".
-	// For "chat": Chat that sent the message originally
-	// For "channel": Channel chat to which the message was originally sent
+	// SenderChat "chat" only.
+	// Chat that sent the message originally
 	SenderChat *Chat `json:"sender_chat,omitempty"`
+	// Chat "channel" only.
+	// Channel chat to which the message was originally sent
+	Chat *Chat `json:"chat,omitempty"`
 	// AuthorSignature "chat" and "channel".
 	// For "chat": For messages originally sent by an anonymous chat administrator,
 	// original message author signature.
