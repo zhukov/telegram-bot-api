@@ -122,6 +122,14 @@ type Update struct {
 	//
 	// optional
 	ChatJoinRequest *ChatJoinRequest `json:"chat_join_request,omitempty"`
+	// ChatBoostUpdated represents a boost added to a chat or changed.
+	//
+	// optional
+	ChatBoost *ChatBoostUpdated `json:"chat_boost,omitempty"`
+	// ChatBoostRemoved represents a boost removed from a chat.
+	//
+	// optional
+	ChatBoostRemoved *ChatBoostRemoved `json:"removed_chat_boost,omitempty"`
 }
 
 // SentFrom returns the user who sent an update. Can be nil, if Telegram did not provide information
