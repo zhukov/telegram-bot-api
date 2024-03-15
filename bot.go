@@ -640,7 +640,20 @@ func (bot *BotAPI) GetStickerSet(config GetStickerSetConfig) (StickerSet, error)
 		return StickerSet{}, err
 	}
 
-	var stickers StickerSet
+	var stickerSet StickerSet
+	err = json.Unmarshal(resp.Result, &stickerSet)
+
+	return stickerSet, err
+}
+
+// GetCustomEmojiStickers returns a slice of Sticker objects.
+func (bot *BotAPI) GetCustomEmojiStickers(config GetCustomEmojiStickersConfig) ([]Sticker, error) {
+	resp, err := bot.Request(config)
+	if err != nil {
+		return []Sticker{}, err
+	}
+
+	var stickers []Sticker
 	err = json.Unmarshal(resp.Result, &stickers)
 
 	return stickers, err
