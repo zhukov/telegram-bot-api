@@ -384,6 +384,12 @@ type Chat struct {
 	//
 	// optional
 	SlowModeDelay int `json:"slow_mode_delay,omitempty"`
+	// UnrestrictBoostCount  is for supergroups, the minimum number of boosts that
+	// a non-administrator user needs to add in order to
+	// ignore slow mode and chat permissions. Returned only in getChat.
+	//
+	// optional
+	UnrestrictBoostCount int `json:"unrestrict_boost_count,omitempty"`
 	// MessageAutoDeleteTime is the time after which all messages sent to the
 	// chat will be automatically deleted; in seconds. Returned only in getChat.
 	//
@@ -420,6 +426,12 @@ type Chat struct {
 	//
 	// optional
 	CanSetStickerSet bool `json:"can_set_sticker_set,omitempty"`
+	// CustomEmojiStickerSetName is for supergroups, the name of the group's 
+	// custom emoji sticker set. Custom emoji from this set can be used by all 
+	// users and bots in the group. Returned only in getChat.
+	//
+	// optional
+	CustomEmojiStickerSetName string `json:"custom_emoji_sticker_set_name,omitempty"`
 	// LinkedChatID is a unique identifier for the linked chat, i.e. the
 	// discussion group identifier for a channel and vice versa; for supergroups
 	// and channel chats.
@@ -488,6 +500,11 @@ type Message struct {
 	//
 	// optional
 	SenderChat *Chat `json:"sender_chat,omitempty"`
+	// SenderBoostCount is the number of boosts added by the user,
+	// if the sender of the message boosted the chat
+	//
+	// optional
+	SenderBoostCount int `json:"sender_boost_count,omitempty"`
 	// Date of the message was sent in Unix time
 	Date int `json:"date"`
 	// Chat is the conversation the message belongs to
@@ -520,6 +537,10 @@ type Message struct {
 	//
 	// optional
 	Quote *TextQuote `json:"text_quote,omitempty"`
+	// ReplyToStory for replies to a story, the original story
+	//
+	// ReplyToStory
+	ReplyToStory *Story `json:"reply_to_story"`
 	// ViaBot through which the message was sent;
 	//
 	// optional
@@ -739,6 +760,10 @@ type Message struct {
 	//
 	// optional
 	ProximityAlertTriggered *ProximityAlertTriggered `json:"proximity_alert_triggered,omitempty"`
+	// BoostAdded is a service message: user boosted the chat
+	//
+	// optional
+	BoostAdded *ChatBoostAdded `json:"boost_added,omitempty"`
 	// ForumTopicCreated is a service message: forum topic created
 	//
 	// optional
@@ -1318,7 +1343,12 @@ type Document struct {
 }
 
 // Story represents a message about a forwarded story in the chat.
-type Story struct{}
+type Story struct {
+	// Chat that posted the story
+	Chat Chat `json:"chat"`
+	// ID is an unique identifier for the story in the chat
+	ID int `json:"id"`
+}
 
 // Video represents a video file.
 type Video struct {
@@ -1577,6 +1607,12 @@ type ProximityAlertTriggered struct {
 type MessageAutoDeleteTimerChanged struct {
 	// New auto-delete time for messages in the chat.
 	MessageAutoDeleteTime int `json:"message_auto_delete_time"`
+}
+
+// ChatBoostAdded represents a service message about a user boosting a chat.
+type ChatBoostAdded struct {
+	// BoostCount is a number of boosts added by the user
+	BoostCount int `json:"boost_count"`
 }
 
 // ForumTopicCreated represents a service message about a new forum topic
