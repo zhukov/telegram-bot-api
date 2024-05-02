@@ -1075,6 +1075,13 @@ func NewSetMyName(languageCode, name string) SetMyNameConfig {
 	}
 }
 
+// NewGetBusinessConnection gets business connection request struct
+func NewGetBusinessConnection(id string) GetBusinessConnectionConfig {
+	return GetBusinessConnectionConfig{
+		BusinessConnectionID: BusinessConnectionID(id),
+	}
+}
+
 // NewGetMyCommandsWithScope allows you to set the registered commands for a
 // given scope.
 func NewGetMyCommandsWithScope(scope BotCommandScope) GetMyCommandsConfig {
