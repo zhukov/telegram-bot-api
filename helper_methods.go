@@ -933,7 +933,7 @@ func NewDeleteChatPhoto(chatID int64) DeleteChatPhotoConfig {
 }
 
 // NewPoll allows you to create a new poll.
-func NewPoll(chatID int64, question string, options ...string) SendPollConfig {
+func NewPoll(chatID int64, question string, options ...InputPollOption) SendPollConfig {
 	return SendPollConfig{
 		BaseChat: BaseChat{
 			ChatConfig: ChatConfig{ChatID: chatID},
@@ -941,6 +941,13 @@ func NewPoll(chatID int64, question string, options ...string) SendPollConfig {
 		Question:    question,
 		Options:     options,
 		IsAnonymous: true, // This is Telegram's default.
+	}
+}
+
+// NewPollOption allows you to create poll option
+func NewPollOption(text string) InputPollOption {
+	return InputPollOption{
+		Text: text,
 	}
 }
 
