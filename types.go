@@ -311,6 +311,11 @@ type Chat struct {
 	//
 	// optional
 	IsForum bool `json:"is_forum,omitempty"`
+}
+
+// ChatFullInfo contains full information about a chat.
+type ChatFullInfo struct {
+	Chat
 	// Photo is a chat photo
 	Photo *ChatPhoto `json:"photo"`
 	// If non-empty, the list of all active chat usernames;
@@ -355,6 +360,8 @@ type Chat struct {
 	//
 	// optional
 	AccentColorID int `json:"accent_color_id,omitempty"`
+	// The maximum number of reactions that can be set on a message in the chat
+	MaxReactionCount int `json:"max_reaction_count"`
 	// BackgroundCustomEmojiID is a custom emoji identifier of emoji chosen by
 	// the chat for the reply header and link preview background.
 	// Returned only in getChat.
@@ -833,6 +840,10 @@ type Message struct {
 	//
 	// optional
 	BoostAdded *ChatBoostAdded `json:"boost_added,omitempty"`
+	// Service message: chat background set
+	//
+	// optional
+	ChatBackgroundSet *ChatBackground `json:"chat_background_set,omitempty"`
 	// ForumTopicCreated is a service message: forum topic created
 	//
 	// optional
@@ -1528,8 +1539,29 @@ type Dice struct {
 type PollOption struct {
 	// Text is the option text, 1-100 characters
 	Text string `json:"text"`
+	// Special entities that appear in the option text.
+	// Currently, only custom emoji entities are allowed in poll option texts
+	//
+	// optional
+	TextEntities []MessageEntity `json:"text_entities,omitempty"`
 	// VoterCount is the number of users that voted for this option
 	VoterCount int `json:"voter_count"`
+}
+
+// InputPollOption contains information about one answer option in a poll to send.
+type InputPollOption struct {
+	// Option text, 1-100 characters
+	Text string `json:"text"`
+	// Mode for parsing entities in the text. See formatting options for more details.
+	// Currently, only custom emoji entities are allowed
+	//
+	// optional
+	TextParseMode string `json:"text_parse_mode,omitempty"`
+	// A JSON-serialized list of special entities that appear in the poll option text.
+	// It can be specified instead of text_parse_mode
+	//
+	// optional
+	TextEntities []MessageEntity `json:"text_entities,omitempty"`
 }
 
 // PollAnswer represents an answer of a user in a non-anonymous poll.
@@ -1557,6 +1589,11 @@ type Poll struct {
 	ID string `json:"id"`
 	// Question is the poll question, 1-255 characters
 	Question string `json:"question"`
+	// Special entities that appear in the question.
+	// Currently, only custom emoji entities are allowed in poll questions
+	//
+	// optional
+	QuestionEntities []MessageEntity `json:"question_entities,omitempty"`
 	// Options is the list of poll options
 	Options []PollOption `json:"options"`
 	// TotalVoterCount is the total numbers of users who voted in the poll
@@ -1610,6 +1647,7 @@ type Location struct {
 	HorizontalAccuracy float64 `json:"horizontal_accuracy,omitempty"`
 	// LivePeriod is time relative to the message sending date, during which the
 	// location can be updated, in seconds. For active live locations only.
+	// Use 0x7FFFFFFF (2147483647 - max positive Int) to edit indefinitely
 	//
 	// optional
 	LivePeriod int `json:"live_period,omitempty"`
@@ -1682,6 +1720,86 @@ type MessageAutoDeleteTimerChanged struct {
 type ChatBoostAdded struct {
 	// BoostCount is a number of boosts added by the user
 	BoostCount int `json:"boost_count"`
+}
+
+// BackgroundFill describes the way a background is filled based on the selected colors.
+// Currently, it can be one of:
+//   - BackgroundFillSolid
+//   - BackgroundFillGradient
+//   - BackgroundFillFreeformGradient
+type BackgroundFill struct {
+	// Type of the background fill, can be:
+	//  - solid
+	//  - gradient
+	//  - freeform_gradient
+	Type string `json:"type"`
+	// BackgroundFillSolid only.
+	// The color of the background fill in the RGB24 format
+	Color int `json:"color"`
+	// BackgroundFillGradient only.
+	// Top color of the gradient in the RGB24 format
+	TopColor int `json:"top_color"`
+	// BackgroundFillGradient only.
+	// Bottom color of the gradient in the RGB24 format
+	BottomColor int `json:"bottom_color"`
+	// BackgroundFillGradient only.
+	// Clockwise rotation angle of the background fill in degrees; 0-359
+	RotationAngle int `json:"rotation_angle"`
+	// BackgroundFillFreeformGradient only.
+	// A list of the 3 or 4 base colors that are used to generate the freeform gradient in the RGB24 format
+	Colors []int `json:"colors"`
+}
+
+// BackgroundType describes the type of a background. Currently, it can be one of:
+//   - BackgroundTypeFill
+//   - BackgroundTypeWallpaper
+//   - BackgroundTypePattern
+//   - BackgroundTypeChatTheme
+type BackgroundType struct {
+	// Type of the background.
+	// Currently, it can be one of:
+	//  - fill
+	//  - wallpaper
+	//  - pattern
+	//  - chat_theme
+	Type string `json:"type"`
+	// BackgroundTypeFill and BackgroundTypePattern only.
+	// The background fill or fill that is combined with the pattern
+	Fill BackgroundFill `json:"fill"`
+	// BackgroundTypeFill and BackgroundTypeWallpaper only.
+	// Dimming of the background in dark themes, as a percentage; 0-100
+	DarkThemeDimming int `json:"dark_theme_dimming"`
+	// BackgroundTypeWallpaper and BackgroundTypePattern only.
+	// Document with the wallpaper / pattern
+	Document Document `json:"document"`
+	// BackgroundTypeWallpaper only.
+	// True, if the wallpaper is downscaled to fit in a 450x450 square and then box-blurred with radius 12
+	//
+	// optional
+	IsBlurred bool `json:"is_blurred,omitempty"`
+	// BackgroundTypeWallpaper and BackgroundTypePattern only.
+	// True, if the background moves slightly when the device is tilted
+	//
+	// optional
+	IsMoving bool `json:"is_moving,omitempty"`
+	// BackgroundTypePattern only.
+	// Intensity of the pattern when it is shown above the filled background; 0-100
+	Intensity int `json:"intensity"`
+	// BackgroundTypePattern only.
+	// True, if the background fill must be applied only to the pattern itself.
+	// All other pixels are black in this case. For dark themes only
+	//
+	// optional
+	IsInverted bool `json:"is_inverted,omitempty"`
+	// BackgroundTypeChatTheme only.
+	// Name of the chat theme, which is usually an emoji
+	ThemeName string `json:"theme_name"`
+}
+
+// ChatBackground represents a chat background.
+type ChatBackground struct {
+	// Type of the background
+	Type BackgroundType `json:"type"`
 }
 
 // ForumTopicCreated represents a service message about a new forum topic
@@ -2702,6 +2820,12 @@ type ChatMemberUpdated struct {
 	//
 	// optional
 	InviteLink *ChatInviteLink `json:"invite_link,omitempty"`
+	// ViaJoinRequest is true, if the user joined the chat
+	// after sending a direct join request
+	// and being approved by an administrator
+	//
+	// optional
+	ViaJoinRequest bool `json:"via_join_request,omitempty"`
 	// ViaChatFolderInviteLink is True, if the user joined the chat
 	// via a chat folder invite link
 	//

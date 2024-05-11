@@ -553,13 +553,13 @@ func WriteToHTTPResponse(w http.ResponseWriter, c Chattable) error {
 }
 
 // GetChat gets information about a chat.
-func (bot *BotAPI) GetChat(config ChatInfoConfig) (Chat, error) {
+func (bot *BotAPI) GetChat(config ChatInfoConfig) (ChatFullInfo, error) {
 	resp, err := bot.Request(config)
 	if err != nil {
-		return Chat{}, err
+		return ChatFullInfo{}, err
 	}
 
-	var chat Chat
+	var chat ChatFullInfo
 	err = json.Unmarshal(resp.Result, &chat)
 
 	return chat, err

@@ -829,6 +829,7 @@ type EditMessageLiveLocationConfig struct {
 	BaseEdit
 	Latitude             float64 // required
 	Longitude            float64 // required
+	LivePeriod           int     //optional
 	HorizontalAccuracy   float64 // optional
 	Heading              int     // optional
 	ProximityAlertRadius int     // optional
@@ -841,6 +842,7 @@ func (config EditMessageLiveLocationConfig) params() (Params, error) {
 	params.AddNonZeroFloat("longitude", config.Longitude)
 	params.AddNonZeroFloat("horizontal_accuracy", config.HorizontalAccuracy)
 	params.AddNonZero("heading", config.Heading)
+	params.AddNonZero("live_period", config.LivePeriod)
 	params.AddNonZero("proximity_alert_radius", config.ProximityAlertRadius)
 
 	return params, err
@@ -924,7 +926,9 @@ func (config ContactConfig) method() string {
 type SendPollConfig struct {
 	BaseChat
 	Question              string
-	Options               []string
+	QuestionParseMode     string          // optional
+	QuestionEntities      []MessageEntity // optional
+	Options               []InputPollOption
 	IsAnonymous           bool
 	Type                  string
 	AllowsMultipleAnswers bool
@@ -944,6 +948,10 @@ func (config SendPollConfig) params() (Params, error) {
 	}
 
 	params["question"] = config.Question
+	params.AddNonEmpty("question_parse_mode", config.QuestionParseMode)
+	if err = params.AddInterface("question_entities", config.QuestionEntities); err != nil {
+		return params, err
+	}
 	if err = params.AddInterface("options", config.Options); err != nil {
 		return params, err
 	}
