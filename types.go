@@ -651,6 +651,10 @@ type Message struct {
 	//
 	// Optional
 	LinkPreviewOptions *LinkPreviewOptions `json:"link_preview_options,omitempty"`
+	// EffectID is the unique identifier of the message effect added to the message
+	//
+	// optional
+	EffectID string `json:"effect_id,omitempty"`
 	// Animation message is an animation, information about the animation.
 	// For backward compatibility, when this field is set, the document field will also be set;
 	//
@@ -701,6 +705,10 @@ type Message struct {
 	//
 	// optional
 	CaptionEntities []MessageEntity `json:"caption_entities,omitempty"`
+	// ShowCaptionAboveMedia is True, if the caption must be shown above the message media
+	//
+	// optional
+	ShowCaptionAboveMedia bool `json:"show_caption_above_media,omitempty"`
 	// HasSpoiler True, if the message media is covered by a spoiler animation
 	//
 	// optional
@@ -1003,6 +1011,7 @@ type MessageEntity struct {
 	//  “strikethrough” (strikethrough text),
 	//  "spoiler" (spoiler message),
 	//  “blockquote” (block quotation),
+	//  “expandable_blockquote” (collapsed-by-default block quotation),
 	//  “code” (monowidth string),
 	//  “pre” (monowidth block),
 	//  “text_link” (for clickable text URLs),
@@ -2415,6 +2424,7 @@ type InlineKeyboardButton struct {
 	// optional
 	CallbackGame *CallbackGame `json:"callback_game,omitempty"`
 	// Pay specify True, to send a Pay button.
+	// Substrings “⭐” and “XTR” in the buttons's text will be replaced with a Telegram Star icon.
 	//
 	// NOTE: This type of button must always be the first button in the first row.
 	//
@@ -3289,6 +3299,10 @@ type BaseInputMedia struct {
 	//
 	// optional
 	CaptionEntities []MessageEntity `json:"caption_entities,omitempty"`
+	// Pass True, if the caption must be shown above the message media
+	//
+	// optional
+	ShowCaptionAboveMedia bool `json:"show_caption_above_media,omitempty"`
 	// HasSpoiler pass True, if the photo needs to be covered with a spoiler animation
 	//
 	// optional
@@ -3778,6 +3792,10 @@ type InlineQueryResultCachedGIF struct {
 	//
 	// optional
 	CaptionEntities []MessageEntity `json:"caption_entities,omitempty"`
+	// Pass True, if the caption must be shown above the message media
+	//
+	// optional
+	ShowCaptionAboveMedia bool `json:"show_caption_above_media,omitempty"`
 	// ReplyMarkup inline keyboard attached to the message.
 	//
 	// optional
@@ -3817,6 +3835,10 @@ type InlineQueryResultCachedMPEG4GIF struct {
 	//
 	// optional
 	CaptionEntities []MessageEntity `json:"caption_entities,omitempty"`
+	// Pass True, if the caption must be shown above the message media
+	//
+	// optional
+	ShowCaptionAboveMedia bool `json:"show_caption_above_media,omitempty"`
 	// ReplyMarkup inline keyboard attached to the message.
 	//
 	// optional
@@ -3858,6 +3880,10 @@ type InlineQueryResultCachedPhoto struct {
 	//
 	// optional
 	CaptionEntities []MessageEntity `json:"caption_entities,omitempty"`
+	// Pass True, if the caption must be shown above the message media
+	//
+	// optional
+	ShowCaptionAboveMedia bool `json:"show_caption_above_media,omitempty"`
 	// ReplyMarkup inline keyboard attached to the message.
 	//
 	// optional
@@ -3917,6 +3943,10 @@ type InlineQueryResultCachedVideo struct {
 	//
 	// optional
 	CaptionEntities []MessageEntity `json:"caption_entities,omitempty"`
+	// Pass True, if the caption must be shown above the message media
+	//
+	// optional
+	ShowCaptionAboveMedia bool `json:"show_caption_above_media,omitempty"`
 	// ReplyMarkup inline keyboard attached to the message
 	//
 	// optional
@@ -4159,6 +4189,10 @@ type InlineQueryResultGIF struct {
 	//
 	// optional
 	CaptionEntities []MessageEntity `json:"caption_entities,omitempty"`
+	// Pass True, if the caption must be shown above the message media
+	//
+	// optional
+	ShowCaptionAboveMedia bool `json:"show_caption_above_media,omitempty"`
 	// ReplyMarkup inline keyboard attached to the message
 	//
 	// optional
@@ -4267,6 +4301,10 @@ type InlineQueryResultMPEG4GIF struct {
 	//
 	// optional
 	CaptionEntities []MessageEntity `json:"caption_entities,omitempty"`
+	// Pass True, if the caption must be shown above the message media
+	//
+	// optional
+	ShowCaptionAboveMedia bool `json:"show_caption_above_media,omitempty"`
 	// ReplyMarkup inline keyboard attached to the message
 	//
 	// optional
@@ -4327,6 +4365,10 @@ type InlineQueryResultPhoto struct {
 	//
 	// optional
 	CaptionEntities []MessageEntity `json:"caption_entities,omitempty"`
+	// Pass True, if the caption must be shown above the message media
+	//
+	// optional
+	ShowCaptionAboveMedia bool `json:"show_caption_above_media,omitempty"`
 	// InputMessageContent content of the message to be sent instead of the photo.
 	//
 	// optional
@@ -4406,6 +4448,15 @@ type InlineQueryResultVideo struct {
 	//
 	// optional
 	Caption string `json:"caption,omitempty"`
+	// CaptionEntities is a list of special entities that appear in the caption,
+	// which can be specified instead of parse_mode
+	//
+	// optional
+	CaptionEntities []MessageEntity `json:"caption_entities,omitempty"`
+	// Pass True, if the caption must be shown above the message media
+	//
+	// optional
+	ShowCaptionAboveMedia bool `json:"show_caption_above_media,omitempty"`
 	// ParseMode mode for parsing entities in the video caption.
 	// See formatting options for more details
 	// (https://core.telegram.org/bots/api#formatting-options).
@@ -4414,7 +4465,7 @@ type InlineQueryResultVideo struct {
 	ParseMode string `json:"parse_mode,omitempty"`
 	// Width video width
 	//
-	// optional	
+	// optional
 	Width int `json:"video_width,omitempty"`
 	// Height video height
 	//
@@ -4617,9 +4668,11 @@ type InputInvoiceMessageContent struct {
 	// Bot-defined invoice payload, 1-128 bytes. This will not be displayed to
 	// the user, use for your internal processes.
 	Payload string `json:"payload"`
-	// Payment provider token, obtained via Botfather
+	// Payment provider token, obtained via Botfather. Pass an empty string for payments in Telegram Stars.
+	//
+	// optional
 	ProviderToken string `json:"provider_token"`
-	// Three-letter ISO 4217 currency code
+	// Three-letter ISO 4217 currency code. Pass “XTR” for payments in Telegram Stars.
 	Currency string `json:"currency"`
 	// Price breakdown, a JSON-serialized list of components (e.g. product
 	// price, tax, discount, delivery cost, delivery tax, bonus, etc.)
@@ -4711,7 +4764,7 @@ type Invoice struct {
 	Description string `json:"description"`
 	// StartParameter unique bot deep-linking parameter that can be used to generate this invoice
 	StartParameter string `json:"start_parameter"`
-	// Currency three-letter ISO 4217 currency code
+	// Currency three-letter ISO 4217 currency code, or “XTR” for payments in Telegram Stars
 	// (see https://core.telegram.org/bots/payments#supported-currencies)
 	Currency string `json:"currency"`
 	// TotalAmount total price in the smallest units of the currency (integer, not float/double).
@@ -4771,7 +4824,7 @@ type ShippingOption struct {
 
 // SuccessfulPayment contains basic information about a successful payment.
 type SuccessfulPayment struct {
-	// Currency three-letter ISO 4217 currency code
+	// Currency three-letter ISO 4217 currency code, or “XTR” for payments in Telegram Stars
 	// (see https://core.telegram.org/bots/payments#supported-currencies)
 	Currency string `json:"currency"`
 	// TotalAmount total price in the smallest units of the currency (integer, not float/double).
@@ -4815,7 +4868,7 @@ type PreCheckoutQuery struct {
 	ID string `json:"id"`
 	// From user who sent the query
 	From *User `json:"from"`
-	// Currency three-letter ISO 4217 currency code
+	// Currency three-letter ISO 4217 currency code, or “XTR” for payments in Telegram Stars
 	//	// (see https://core.telegram.org/bots/payments#supported-currencies)
 	Currency string `json:"currency"`
 	// TotalAmount total price in the smallest units of the currency (integer, not float/double).
