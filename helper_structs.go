@@ -20,11 +20,12 @@ func (base ChatConfig) paramsWithKey(key string) (Params, error) {
 type BaseChat struct {
 	ChatConfig
 	BusinessConnectionID BusinessConnectionID
-	MessageThreadID     int
-	ProtectContent      bool
-	ReplyMarkup         interface{}
-	DisableNotification bool
-	ReplyParameters     ReplyParameters
+	MessageThreadID      int
+	ProtectContent       bool
+	ReplyMarkup          interface{}
+	DisableNotification  bool
+	MessageEffectID      string // for private chats only
+	ReplyParameters      ReplyParameters
 }
 
 func (chat *BaseChat) params() (Params, error) {
@@ -41,6 +42,7 @@ func (chat *BaseChat) params() (Params, error) {
 	params.AddNonZero("message_thread_id", chat.MessageThreadID)
 	params.AddBool("disable_notification", chat.DisableNotification)
 	params.AddBool("protect_content", chat.ProtectContent)
+	params.AddNonEmpty("message_effect_id", chat.MessageEffectID)
 
 	err = params.AddInterface("reply_markup", chat.ReplyMarkup)
 	if err != nil {

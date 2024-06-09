@@ -375,6 +375,7 @@ var (
 	_ Chattable = SetMyShortDescriptionConfig{}
 	_ Chattable = GetMyNameConfig{}
 	_ Chattable = SetMyNameConfig{}
+	_ Chattable = RefundStarPaymentConfig{}
 )
 
 // Ensure all Fileable types are correct.
