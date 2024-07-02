@@ -436,6 +436,11 @@ type ChatFullInfo struct {
 	//
 	// optional
 	Permissions *ChatPermissions `json:"permissions,omitempty"`
+	// True, if paid media messages can be sent or forwarded to the channel chat.
+	// The field is available only for channel chats.
+	//
+	// optional
+	CanSendPaidMedia bool `json:"can_send_paid_media,omitempty"`
 	// SlowModeDelay is for supergroups, the minimum allowed delay between
 	// consecutive messages sent by each unprivileged user. Returned only in
 	// getChat.
@@ -673,6 +678,10 @@ type Message struct {
 	//
 	// optional
 	Document *Document `json:"document,omitempty"`
+	// Message contains paid media; information about the paid media
+	//
+	// optional
+	PaidMedia *PaidMediaInfo `json:"paid_media,omitempty"`
 	// Photo message is a photo, available sizes of the photo;
 	//
 	// optional
@@ -1153,6 +1162,10 @@ type ExternalReplyInfo struct {
 	//
 	// optional
 	Document *Document `json:"document,omitempty"`
+	// Message contains paid media; information about the paid media
+	//
+	// optional
+	PaidMedia *PaidMediaInfo `json:"paid_media,omitempty"`
 	// Photo message is a photo, available sizes of the photo;
 	//
 	// optional
@@ -1512,6 +1525,47 @@ type Voice struct {
 	//
 	// optional
 	FileSize int64 `json:"file_size,omitempty"`
+}
+
+// PaidMediaInfo describes the paid media added to a message.
+type PaidMediaInfo struct {
+	// The number of Telegram Stars that must be paid to buy access to the media
+	StarCount int64 `json:"star_count"`
+	// Information about the paid media
+	PaidMedia []PaidMedia `json:"paid_media"`
+}
+
+// This object describes paid media. Currently, it can be one of
+//   - PaidMediaPreview
+//   - PaidMediaPhoto
+//   - PaidMediaVideo
+type PaidMedia struct {
+	// Type of the paid media, should be one of:
+	//   - "photo"
+	//   - "video"
+	//   - "preview"
+	Type string `json:"type"`
+	// PaidMediaPreview only.
+	// Media width as defined by the sender.
+	//
+	// optional
+	Width int64 `json:"width,omitempty"`
+	// PaidMediaPreview only.
+	// Media height as defined by the sender
+	//
+	// optional
+	Height int64 `json:"height,omitempty"`
+	// PaidMediaPreview only.
+	// Duration of the media in seconds as defined by the sender
+	//
+	// optional
+	Duration int64 `json:"duration,omitempty"`
+	// PaidMediaPhoto only.
+	// The photo
+	Photo *[]PhotoSize `json:"photo,omitempty"`
+	// PaidMediaVideo only.
+	// The video
+	Video *Video `json:"video,omitempty"`
 }
 
 // Contact represents a phone contact.
@@ -3153,6 +3207,9 @@ type MenuButton struct {
 	Text string `json:"text,omitempty"`
 	// WebApp is the description of the Web App that will be launched when the
 	// user presses the button for the `web_app` type.
+	//
+	// Alternatively, a t.me link to a Web App of the bot can be specified in the object instead of the Web App's URL,
+	// in which case the Web App will be opened as if the user pressed the link.
 	WebApp *WebAppInfo `json:"web_app,omitempty"`
 }
 
@@ -3412,6 +3469,48 @@ type InputMediaDocument struct {
 	//
 	// optional
 	DisableContentTypeDetection bool `json:"disable_content_type_detection,omitempty"`
+}
+
+// This object describes the paid media to be sent. Currently, it can be one of:
+//   - InputPaidMediaPhoto
+//   - InputPaidMediaVideo
+type InputPaidMedia struct {
+	// Type of the media, must be one of:
+	//  - "photo"
+	//  - "video"
+	Type string `json:"type"`
+	// File to send. Pass a file_id to send a file that exists on the Telegram servers (recommended),
+	// pass an HTTP URL for Telegram to get a file from the Internet,
+	// or pass “attach://<file_attach_name>” to upload a new one using multipart/form-data under <file_attach_name> name.
+	// More information on https://core.telegram.org/bots/api#sending-files
+	Media RequestFileData `json:"media"`
+	// InputPaidMediaVideo only.
+	// Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side.
+	// The thumbnail should be in JPEG format and less than 200 kB in size.
+	// A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data.
+	// Thumbnails can't be reused and can be only uploaded as a new file,
+	//  so you can pass “attach://<file_attach_name>” if the thumbnail was uploaded using multipart/form-data under <file_attach_name>.
+	//
+	// optional
+	Thumb RequestFileData `json:"thumbnail"`
+	// InputPaidMediaVideo only.
+	// Video width
+	//
+	// optional
+	Width int64 `json:"width,omitempty"`
+	// InputPaidMediaVideo only.
+	// Video height
+	//
+	// optional
+	Height int64 `json:"height,omitempty"`
+	// InputPaidMediaVideo only.
+	// Video duration in seconds
+	//
+	// optional
+	Duration int64 `json:"duration,omitempty"`
+	// InputPaidMediaVideo only.
+	// Pass True if the uploaded video is suitable for streaming
+	SupportsStreaming bool `json:"supports_streaming,omitempty"`
 }
 
 // Constant values for sticker types
@@ -4918,11 +5017,13 @@ type RevenueWithdrawalState struct {
 //   - TransactionPartnerFragment
 //   - TransactionPartnerUser
 //   - TransactionPartnerOther
+//   - TransactionPartnerTelegramAds
 type TransactionPartner struct {
 	//Type of the transaction partner. Must be one of:
 	//	- fragment
 	//	- user
 	//  - other
+	//  - telegram_ads
 	Type string `json:"type"`
 	// State of the transaction if the transaction is outgoing.
 	// Represent only in "fragment" state
@@ -4932,6 +5033,11 @@ type TransactionPartner struct {
 	// Information about the user.
 	// Represent only in "user" state
 	User *User `json:"user,omitempty"`
+	// TransactionPartnerUser only.
+	// Bot-specified invoice payload
+	//
+	// optional
+	InvoicePayload string `json:"invoice_payload,omitempty"`
 }
 
 // StarTransaction describes a Telegram Star transaction.

@@ -377,6 +377,7 @@ var (
 	_ Chattable = SetMyNameConfig{}
 	_ Chattable = RefundStarPaymentConfig{}
 	_ Chattable = GetStarTransactionsConfig{}
+	_ Chattable = PaidMediaConfig{}
 )
 
 // Ensure all Fileable types are correct.
@@ -398,6 +399,7 @@ var (
 	_ Fileable = (*MediaGroupConfig)(nil)
 	_ Fileable = (*WebhookConfig)(nil)
 	_ Fileable = (*SetStickerSetThumbConfig)(nil)
+	_ Fileable = (*PaidMediaConfig)(nil)
 )
 
 // Ensure all RequestFileData types are correct.
