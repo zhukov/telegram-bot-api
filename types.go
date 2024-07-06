@@ -1562,7 +1562,7 @@ type PaidMedia struct {
 	Duration int64 `json:"duration,omitempty"`
 	// PaidMediaPhoto only.
 	// The photo
-	Photo *[]PhotoSize `json:"photo,omitempty"`
+	Photo []PhotoSize `json:"photo,omitempty"`
 	// PaidMediaVideo only.
 	// The video
 	Video *Video `json:"video,omitempty"`
