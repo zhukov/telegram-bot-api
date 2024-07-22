@@ -834,18 +834,20 @@ func NewCallbackWithAlert(id, text string) CallbackConfig {
 }
 
 // NewInvoice creates a new Invoice request to the user.
-func NewInvoice(chatID int64, title, description, payload, providerToken, startParameter, currency string, prices []LabeledPrice) InvoiceConfig {
+func NewInvoice(chatID int64, title, description, payload, providerToken, startParameter, currency string, prices []LabeledPrice, suggestedTipAmounts []int) InvoiceConfig {
 	return InvoiceConfig{
 		BaseChat: BaseChat{
 			ChatConfig: ChatConfig{ChatID: chatID},
 		},
-		Title:          title,
-		Description:    description,
-		Payload:        payload,
-		ProviderToken:  providerToken,
-		StartParameter: startParameter,
-		Currency:       currency,
-		Prices:         prices}
+		Title:               title,
+		Description:         description,
+		Payload:             payload,
+		ProviderToken:       providerToken,
+		StartParameter:      startParameter,
+		Currency:            currency,
+		Prices:              prices,
+		SuggestedTipAmounts: suggestedTipAmounts,
+	}
 }
 
 // NewChatTitle allows you to update the title of a chat.
