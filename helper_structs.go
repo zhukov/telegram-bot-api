@@ -67,7 +67,6 @@ type BaseEdit struct {
 	BaseChatMessage
 	InlineMessageID      string
 	ReplyMarkup          *InlineKeyboardMarkup
-	BusinessConnectionID string
 }
 
 func (edit BaseEdit) params() (Params, error) {
@@ -84,7 +83,6 @@ func (edit BaseEdit) params() (Params, error) {
 	}
 
 	err := params.AddInterface("reply_markup", edit.ReplyMarkup)
-	params.AddNonEmpty("business_connection_id", edit.BusinessConnectionID)
 
 	return params, err
 }
@@ -107,7 +105,8 @@ func (spoiler BaseSpoiler) params() (Params, error) {
 // BaseChatMessage is a base type for all messages in chats.
 type BaseChatMessage struct {
 	ChatConfig
-	MessageID int
+	MessageID            int
+	BusinessConnectionID BusinessConnectionID
 }
 
 func (base BaseChatMessage) params() (Params, error) {
@@ -115,9 +114,14 @@ func (base BaseChatMessage) params() (Params, error) {
 	if err != nil {
 		return params, err
 	}
+	p1, err := base.BusinessConnectionID.params()
+	if err != nil {
+		return params, err
+	}
+	params.Merge(p1)
 	params.AddNonZero("message_id", base.MessageID)
 
-	return params, nil
+	return params, err
 }
 
 // BaseChatMessages is a base type for all messages in chats.

@@ -263,6 +263,10 @@ type User struct {
 	//
 	// optional
 	CanConnectToBusiness bool `json:"can_connect_to_business,omitempty"`
+	// True, if the bot has a main Web App. Returned only in getMe.
+	//
+	// optional
+	HasMainWebApp bool `json:"has_main_web_app,omitempty"`
 }
 
 // String displays a simple text version of a user.
