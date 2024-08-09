@@ -67,7 +67,6 @@ type BaseEdit struct {
 	BaseChatMessage
 	InlineMessageID      string
 	ReplyMarkup          *InlineKeyboardMarkup
-	BusinessConnectionID string
 }
 
 func (edit BaseEdit) params() (Params, error) {
@@ -84,7 +83,6 @@ func (edit BaseEdit) params() (Params, error) {
 	}
 
 	err := params.AddInterface("reply_markup", edit.ReplyMarkup)
-	params.AddNonEmpty("business_connection_id", edit.BusinessConnectionID)
 
 	return params, err
 }
@@ -116,8 +114,12 @@ func (base BaseChatMessage) params() (Params, error) {
 	if err != nil {
 		return params, err
 	}
+	p1, err := base.BusinessConnectionID.params()
+	if err != nil {
+		return params, err
+	}
+	params.Merge(p1)
 	params.AddNonZero("message_id", base.MessageID)
-	err = params.AddInterface("business_connection_id", base.BusinessConnectionID)
 
 	return params, err
 }
