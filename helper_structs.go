@@ -107,7 +107,8 @@ func (spoiler BaseSpoiler) params() (Params, error) {
 // BaseChatMessage is a base type for all messages in chats.
 type BaseChatMessage struct {
 	ChatConfig
-	MessageID int
+	MessageID            int
+	BusinessConnectionID BusinessConnectionID
 }
 
 func (base BaseChatMessage) params() (Params, error) {
@@ -116,8 +117,9 @@ func (base BaseChatMessage) params() (Params, error) {
 		return params, err
 	}
 	params.AddNonZero("message_id", base.MessageID)
+	err = params.AddInterface("business_connection_id", base.BusinessConnectionID)
 
-	return params, nil
+	return params, err
 }
 
 // BaseChatMessages is a base type for all messages in chats.
