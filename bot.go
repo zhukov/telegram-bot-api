@@ -473,10 +473,11 @@ func (bot *BotAPI) GetUpdatesChan(config UpdateConfig) UpdatesChannel {
 
 			updates, err := bot.GetUpdatesWithContext(ctx, config)
 			if err != nil {
-				log.Println(err)
-				log.Println("Failed to get updates, retrying in 3 seconds...")
-				time.Sleep(time.Second * 3)
-
+				if ctx.Err() == nil {
+					log.Println(err)
+					log.Println("Failed to get updates, retrying in 3 seconds...")
+					time.Sleep(time.Second * 3)
+				}
 				continue
 			}
 
