@@ -834,7 +834,23 @@ func NewCallbackWithAlert(id, text string) CallbackConfig {
 }
 
 // NewInvoice creates a new Invoice request to the user.
-func NewInvoice(chatID int64, title, description, payload, providerToken, startParameter, currency string, prices []LabeledPrice, suggestedTipAmounts []int) InvoiceConfig {
+func NewInvoice(
+	chatID int64,
+	title string,
+	description string,
+	payload string,
+	providerToken string,
+	startParameter string,
+	currency string,
+	prices []LabeledPrice,
+	suggestedTipAmounts []int,
+) InvoiceConfig {
+	var maxTipAmount, n int
+	for n = range suggestedTipAmounts {
+		if maxTipAmount < suggestedTipAmounts[n] {
+			maxTipAmount = suggestedTipAmounts[n]
+		}
+	}
 	return InvoiceConfig{
 		BaseChat: BaseChat{
 			ChatConfig: ChatConfig{ChatID: chatID},
@@ -847,6 +863,21 @@ func NewInvoice(chatID int64, title, description, payload, providerToken, startP
 		Currency:            currency,
 		Prices:              prices,
 		SuggestedTipAmounts: suggestedTipAmounts,
+		MaxTipAmount:        maxTipAmount,
+	}
+}
+
+// NewInvoiceLink creates a new createInvoiceLink request.
+func NewInvoiceLink(ico InvoiceConfig) InvoiceLinkConfig {
+	return InvoiceLinkConfig{
+		Title:               ico.Title,
+		Description:         ico.Description,
+		Payload:             ico.Payload,
+		ProviderToken:       ico.ProviderToken,
+		Currency:            ico.Currency,
+		Prices:              ico.Prices,
+		SuggestedTipAmounts: ico.SuggestedTipAmounts,
+		MaxTipAmount:        ico.MaxTipAmount,
 	}
 }
 
