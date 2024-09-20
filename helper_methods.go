@@ -988,6 +988,20 @@ func NewDiceWithEmoji(chatID int64, emoji string) DiceConfig {
 	}
 }
 
+// NewSetMessageReaction allows you to set a message's reactions.
+func NewSetMessageReaction(chatID int64, messageID int, reaction []ReactionType, isBig bool) SetMessageReactionConfig {
+	return SetMessageReactionConfig{
+		BaseChatMessage: BaseChatMessage{
+			ChatConfig: ChatConfig{
+				ChatID: chatID,
+			},
+			MessageID: messageID,
+		},
+		Reaction: reaction,
+		IsBig:    isBig,
+	}
+}
+
 // NewBotCommandScopeDefault represents the default scope of bot commands.
 func NewBotCommandScopeDefault() BotCommandScope {
 	return BotCommandScope{Type: "default"}
