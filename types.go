@@ -2662,6 +2662,17 @@ type ChatInviteLink struct {
 	//
 	// optional
 	PendingJoinRequestCount int `json:"pending_join_request_count,omitempty"`
+	// SubscriptionPeriod is the number of seconds the subscription
+	// will be active for before the next payment
+	//
+	// optional
+	SubscriptionPeriod int `json:"subscription_period,omitempty"`
+	// SubscriptionPrice is the amount of Telegram Stars a user
+	// must pay initially and after each subsequent subscription
+	// period to be a member of the chat using the link
+	//
+	// optional
+	SubscriptionPrice int `json:"subscription_price,omitempty"`
 }
 
 type ChatAdministratorRights struct {
@@ -2704,9 +2715,13 @@ type ChatMember struct {
 	//
 	// optional
 	IsAnonymous bool `json:"is_anonymous,omitempty"`
-	// UntilDate restricted and kicked only.
+	// UntilDate for restricted and kicked.
 	// Date when restrictions will be lifted for this user;
 	// unix time.
+	//
+	// Until date for member.
+	// Date when the user's subscription will expire;
+	// Unix time
 	//
 	// optional
 	UntilDate int64 `json:"until_date,omitempty"`
@@ -3092,11 +3107,13 @@ type ChatLocation struct {
 const (
 	ReactionTypeEmoji       = "emoji"
 	ReactionTypeCustomEmoji = "custom_emoji"
+	ReactionTypePaid        = "paid"
 )
 
-// ReactionType describes the type of a reaction. Currently, it can be one of: "emoji", "custom_emoji"
+// ReactionType describes the type of a reaction.
+// Currently, it can be one of: "emoji", "custom_emoji", "paid"
 type ReactionType struct {
-	// Type of the reaction. Can be "emoji", "custom_emoji"
+	// Type of the reaction. Can be "emoji", "custom_emoji", "paid"
 	Type string `json:"type"`
 	// Emoji type "emoji" only. Is a reaction emoji.
 	Emoji string `json:"emoji"`
@@ -3110,6 +3127,10 @@ func (r ReactionType) IsEmoji() bool {
 
 func (r ReactionType) IsCustomEmoji() bool {
 	return r.Type == ReactionTypeCustomEmoji
+}
+
+func (r ReactionType) IsPaid() bool {
+	return r.Type == ReactionTypePaid
 }
 
 // ReactionCount represents a reaction added to a message along with the number of times it was added.
@@ -5043,10 +5064,10 @@ type RevenueWithdrawalState struct {
 }
 
 // TransactionPartner describes the source of a transaction, or its recipient for outgoing transactions. Currently, it can be one of
-//   - TransactionPartnerFragment
 //   - TransactionPartnerUser
-//   - TransactionPartnerOther
+//   - TransactionPartnerFragment
 //   - TransactionPartnerTelegramAds
+//   - TransactionPartnerOther
 type TransactionPartner struct {
 	//Type of the transaction partner. Must be one of:
 	//	- fragment
@@ -5067,6 +5088,12 @@ type TransactionPartner struct {
 	//
 	// optional
 	InvoicePayload string `json:"invoice_payload,omitempty"`
+	// PaidMedia is the nformation about the paid media
+	// bought by the user
+	// Represent only in "user" state
+	//
+	// optional
+	PaidMedia []PaidMedia `json:"paid_media,omitempty"`
 }
 
 // StarTransaction describes a Telegram Star transaction.

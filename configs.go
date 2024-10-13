@@ -1823,6 +1823,60 @@ func (config EditChatInviteLinkConfig) params() (Params, error) {
 	return params, nil
 }
 
+// CreateChatSubscriptionLinkConfig creates a subscription invite link for a channel chat.
+// The bot must have the can_invite_users administrator rights.
+// The link can be edited using the method editChatSubscriptionInviteLink or
+// revoked using the method revokeChatInviteLink.
+// Returns the new invite link as a ChatInviteLink object.
+type CreateChatSubscriptionLinkConfig struct {
+	ChatConfig
+	Name               string
+	SubscriptionPeriod int
+	SubscriptionPrice  int
+}
+
+func (CreateChatSubscriptionLinkConfig) method() string {
+	return "createChatSubscriptionInviteLink"
+}
+
+func (config CreateChatSubscriptionLinkConfig) params() (Params, error) {
+	params, err := config.ChatConfig.params()
+	if err != nil {
+		return params, err
+	}
+
+	params.AddNonEmpty("name", config.Name)
+	params.AddNonZero("subscription_period", config.SubscriptionPeriod)
+	params.AddNonZero("subscription_price", config.SubscriptionPrice)
+
+	return params, nil
+}
+
+// EditChatSubscriptionLinkConfig edits a subscription invite link created by the bot.
+// The bot must have the can_invite_users administrator rights.
+// Returns the edited invite link as a ChatInviteLink object.
+type EditChatSubscriptionLinkConfig struct {
+	ChatConfig
+	InviteLink string
+	Name       string
+}
+
+func (EditChatSubscriptionLinkConfig) method() string {
+	return "editChatSubscriptionInviteLink"
+}
+
+func (config EditChatSubscriptionLinkConfig) params() (Params, error) {
+	params, err := config.ChatConfig.params()
+	if err != nil {
+		return params, err
+	}
+
+	params["invite_link"] = config.InviteLink
+	params.AddNonEmpty("name", config.Name)
+
+	return params, nil
+}
+
 // RevokeChatInviteLinkConfig allows you to revoke an invite link created by the
 // bot. If the primary link is revoked, a new link is automatically generated.
 // The bot must be an administrator in the chat for this to work and must have
