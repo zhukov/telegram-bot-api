@@ -96,6 +96,10 @@ const (
 	// UpdateTypePreCheckoutQuery is new incoming pre-checkout query. Contains full information about checkout
 	UpdateTypePreCheckoutQuery = "pre_checkout_query"
 
+	// UpdateTypePurchasedPaidMedia is a user purchased paid media with a non-empty payload
+	// sent by the bot in a non-channel chat
+	UpdateTypePurchasedPaidMedia = "purchased_paid_media"
+
 	// UpdateTypePoll is new poll state. Bots receive only updates about stopped polls and polls
 	// which are sent by the bot
 	UpdateTypePoll = "poll"
@@ -559,7 +563,7 @@ func (config DocumentConfig) params() (Params, error) {
 	if err != nil {
 		return params, err
 	}
-	
+
 	params.AddNonEmpty("caption", config.Caption)
 	params.AddNonEmpty("parse_mode", config.ParseMode)
 	params.AddBool("disable_content_type_detection", config.DisableContentTypeDetection)
@@ -774,6 +778,7 @@ type PaidMediaConfig struct {
 	BaseChat
 	StarCount             int64
 	Media                 []InputPaidMedia
+	Payload               string          // optional
 	Caption               string          // optional
 	ParseMode             string          // optional
 	CaptionEntities       []MessageEntity // optional
@@ -787,6 +792,7 @@ func (config PaidMediaConfig) params() (Params, error) {
 	}
 
 	params.AddNonZero64("star_count", config.StarCount)
+	params.AddNonEmpty("payload", config.Payload)
 	params.AddNonEmpty("caption", config.Caption)
 	params.AddNonEmpty("parse_mode", config.ParseMode)
 	params.AddBool("show_caption_above_media", config.ShowCaptionAboveMedia)

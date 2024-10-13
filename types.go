@@ -114,6 +114,11 @@ type Update struct {
 	//
 	// optional
 	PreCheckoutQuery *PreCheckoutQuery `json:"pre_checkout_query,omitempty"`
+	// PurchasedPaidMedia is user purchased paid media with a non-empty
+	// payload sent by the bot in a non-channel chat
+	//
+	// optional
+	PurchasedPaidMedia *PaidMediaPurchased `json:"purchased_paid_media,omitempty"`
 	// Pool new poll state. Bots receive only updates about stopped polls and
 	// polls, which are sent by the bot
 	//
@@ -2032,7 +2037,14 @@ type VideoChatParticipantsInvited struct {
 }
 
 // This object represents a service message about the creation of a scheduled giveaway. Currently holds no information.
-type GiveawayCreated struct{}
+type GiveawayCreated struct {
+	// PrizeStarCount is the number of Telegram Stars to be split
+	// between giveaway winners;
+	// for Telegram Star giveaways only
+	//
+	// optional
+	PrizeStarCount int `json:"prize_star_count,omitempty"`
+}
 
 // Giveaway represents a message about a scheduled giveaway.
 type Giveaway struct {
@@ -2063,6 +2075,12 @@ type Giveaway struct {
 	//
 	// optional
 	CountryCodes []string `json:"country_codes,omitempty"`
+	// PrizeStarCount is the number of Telegram Stars to be split
+	// between giveaway winners;
+	// for Telegram Star giveaways only
+	//
+	// optional
+	PrizeStarCount int `json:"prize_star_count,omitempty"`
 	// PremiumSubscriptionMonthCount the number of months the Telegram Premium
 	// subscription won from the giveaway will be active for
 	//
@@ -2089,6 +2107,12 @@ type GiveawayWinners struct {
 	//
 	// optional
 	AdditionalChatCount int `json:"additional_chat_count,omitempty"`
+	// PrizeStarCount is the number of Telegram Stars to be split
+	// between giveaway winners;
+	// for Telegram Star giveaways only
+	//
+	// optional
+	PrizeStarCount int `json:"prize_star_count,omitempty"`
 	// PremiumSubscriptionMonthCount the number of months the Telegram Premium
 	// subscription won from the giveaway will be active for
 	//
@@ -2125,6 +2149,11 @@ type GiveawayCompleted struct {
 	//
 	// optional
 	GiveawayMessage *Message `json:"giveaway_message,omitempty"`
+	// IsStarGiveaway True, if the giveaway is a Telegram Star giveaway. 
+	// Otherwise, currently, the giveaway is a Telegram Premium giveaway.
+	//
+	// optional
+	IsStarGiveaway bool `json:"is_star_giveaway,omitempty"`
 }
 
 // LinkPreviewOptions describes the options used for link preview generation.
@@ -3261,6 +3290,13 @@ type ChatBoostSource struct {
 	// Is an identifier of a message in the chat with the giveaway;
 	// the message could have been deleted already. May be 0 if the message isn't sent yet.
 	GiveawayMessageID int `json:"giveaway_message_id,omitempty"`
+	// PrizeStarCount "giveaway" only.
+	// The number of Telegram Stars to be split
+	// between giveaway winners;
+	// for Telegram Star giveaways only
+	//
+	// optional
+	PrizeStarCount int `json:"prize_star_count,omitempty"`
 	// IsUnclaimed "giveaway" only.
 	// True, if the giveaway was completed, but there was no user to win the prize
 	//
@@ -5043,6 +5079,14 @@ type PreCheckoutQuery struct {
 	//
 	// optional
 	OrderInfo *OrderInfo `json:"order_info,omitempty"`
+}
+
+// PaidMediaPurchased contains information about a paid media purchase.
+type PaidMediaPurchased struct {
+	// From is the user who purchased the media
+	From User `json:"from"`
+	// PaidMediaPayload bot-specified paid media payload
+	PaidMediaPayload string `json:"paid_media_payload"`
 }
 
 // RevenueWithdrawalState describes the state of a revenue withdrawal operation.
