@@ -293,6 +293,7 @@ var (
 	_ Chattable = ContactConfig{}
 	_ Chattable = CopyMessageConfig{}
 	_ Chattable = CreateChatInviteLinkConfig{}
+	_ Chattable = CreateChatSubscriptionLinkConfig{}
 	_ Chattable = DeleteChatPhotoConfig{}
 	_ Chattable = DeleteChatStickerSetConfig{}
 	_ Chattable = DeleteMessageConfig{}
@@ -300,6 +301,7 @@ var (
 	_ Chattable = DeleteWebhookConfig{}
 	_ Chattable = DocumentConfig{}
 	_ Chattable = EditChatInviteLinkConfig{}
+	_ Chattable = EditChatSubscriptionLinkConfig{}
 	_ Chattable = EditMessageCaptionConfig{}
 	_ Chattable = EditMessageLiveLocationConfig{}
 	_ Chattable = EditMessageMediaConfig{}
