@@ -556,7 +556,10 @@ type DocumentConfig struct {
 
 func (config DocumentConfig) params() (Params, error) {
 	params, err := config.BaseFile.params()
-
+	if err != nil {
+		return params, err
+	}
+	
 	params.AddNonEmpty("caption", config.Caption)
 	params.AddNonEmpty("parse_mode", config.ParseMode)
 	params.AddBool("disable_content_type_detection", config.DisableContentTypeDetection)
