@@ -1,16 +1,8 @@
-> # Usage
-> If you want to use this fork in the project that imports the original repo, the easiest way is to:
-> - `git submodule add git@github.com:OvyFlash/telegram-bot-api.git telegram-bot-api`
-> - `go mod edit --replace github.com/go-telegram-bot-api/telegram-bot-api/v5=./telegram-bot-api/`
-> - `go mod tidy`
-> And you're ready to go.
-> Notice, that there have been several breaking changes since the telegram bot API v5 was released, so you might need to update your application.
-
 # Golang bindings for the Telegram Bot API
-[![Go Reference](https://pkg.go.dev/badge/github.com/go-telegram-bot-api/telegram-bot-api/v5.svg)](https://pkg.go.dev/github.com/go-telegram-bot-api/telegram-bot-api/v5)
+[![Go Reference](https://pkg.go.dev/badge/github.com/OvyFlash/telegram-bot-api/v6.svg)](https://pkg.go.dev/github.com/OvyFlash/telegram-bot-api/v6)
 [![Test](https://github.com/go-telegram-bot-api/telegram-bot-api/actions/workflows/test.yml/badge.svg)](https://github.com/go-telegram-bot-api/telegram-bot-api/actions/workflows/test.yml)
 
-All methods are fairly self-explanatory, and reading the [godoc](https://pkg.go.dev/github.com/go-telegram-bot-api/telegram-bot-api/v5) page should
+All methods are fairly self-explanatory, and reading the [godoc](https://pkg.go.dev/github.com/OvyFlash/telegram-bot-api/v6) page should
 explain everything. If something isn't clear, open an issue or submit
 a pull request.
 
@@ -27,7 +19,7 @@ you want to ask questions or discuss development.
 ## Example
 
 First, ensure the library is installed and up to date by running
-`go get -u github.com/go-telegram-bot-api/telegram-bot-api/v5`.
+`go get -u github.com/OvyFlash/telegram-bot-api/v6`.
 
 This is a very simple bot that just displays any gotten updates,
 then replies it to that chat.
@@ -38,7 +30,7 @@ package main
 import (
 	"log"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	tgbotapi "github.com/OvyFlash/telegram-bot-api/v6"
 )
 
 func main() {
@@ -79,7 +71,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/OvyFlash/telegram-bot-api/v6"
 )
 
 func main() {
