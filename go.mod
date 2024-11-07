@@ -1,3 +1,3 @@
-module github.com/OvyFlash/telegram-bot-api/v6
+module github.com/OvyFlash/telegram-bot-api
 
 go 1.23

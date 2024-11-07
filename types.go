@@ -2149,7 +2149,7 @@ type GiveawayCompleted struct {
 	//
 	// optional
 	GiveawayMessage *Message `json:"giveaway_message,omitempty"`
-	// IsStarGiveaway True, if the giveaway is a Telegram Star giveaway. 
+	// IsStarGiveaway True, if the giveaway is a Telegram Star giveaway.
 	// Otherwise, currently, the giveaway is a Telegram Premium giveaway.
 	//
 	// optional
@@ -3638,7 +3638,7 @@ type Sticker struct {
 	// NeedsRepainting True, if the sticker must be repainted to a text color in messages, the color of the Telegram Premium badge in emoji status, white color on chat photos, or another appropriate color in other places
 	//
 	//optional
-	NeedsRepainting bool `json:"needs_reainting,omitempty"`
+	NeedsRepainting bool `json:"needs_repainting,omitempty"`
 	// FileSize
 	//
 	// optional
