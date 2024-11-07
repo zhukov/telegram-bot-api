@@ -21,10 +21,9 @@ Install the latest version:
 go get -u github.com/OvyFlash/telegram-bot-api
 ```
 
+
 > ❗ Tag versioning is discouraged due to the unstable nature of the Telegram Bot API, and it might break at any time after the API changes.
->```
->go get -u github.com/OvyFlash/telegram-bot-api/v7
->```
+> ~~`go get -u github.com/OvyFlash/telegram-bot-api/v7`~~
 
 ## Quick Start
 
