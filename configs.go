@@ -3273,6 +3273,8 @@ func prepareInputMediaParam(inputMedia interface{}, idx int) interface{} {
 		if m.Thumb != nil && m.Thumb.NeedsUpload() {
 			m.Thumb = fileAttach(fmt.Sprintf("attach://file-%d-thumb", idx))
 		}
+
+		return
 	case InputMediaDocument:
 		if m.Media.NeedsUpload() {
 			m.Media = fileAttach(fmt.Sprintf("attach://file-%d", idx))
