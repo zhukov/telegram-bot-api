@@ -1,14 +1,12 @@
 package tgbotapi
 
 import (
-	"net/http"
 	"os"
 	"testing"
 	"time"
 )
 
 const (
-	TestToken               = "153667468:AAHlSHlMqSt1f_uFmVRJbm5gntu2HI4WW8I"
 	ChatID                  = 76918703
 	Channel                 = "@tgbotapitest"
 	SupergroupChatID        = -1001120141283
@@ -35,7 +33,7 @@ func (t testLogger) Printf(format string, v ...interface{}) {
 }
 
 func getBot(t *testing.T) (*BotAPI, error) {
-	bot, err := NewBotAPI(TestToken)
+	bot, err := NewBotAPI(os.Getenv("TEST_TOKEN"))
 	bot.Debug = true
 
 	logger := testLogger{t}
@@ -671,154 +669,6 @@ func TestSendWithMediaGroupAudio(t *testing.T) {
 	}
 }
 
-func ExampleNewBotAPI() {
-	bot, err := NewBotAPI("MyAwesomeBotToken")
-	if err != nil {
-		panic(err)
-	}
-
-	bot.Debug = true
-
-	log.Printf("Authorized on account %s", bot.Self.UserName)
-
-	u := NewUpdate(0)
-	u.Timeout = 60
-
-	updates := bot.GetUpdatesChan(u)
-
-	// Optional: wait for updates and clear them if you don't want to handle
-	// a large backlog of old messages
-	time.Sleep(time.Millisecond * 500)
-	updates.Clear()
-
-	for update := range updates {
-		if update.Message == nil {
-			continue
-		}
-
-		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-
-		msg := NewMessage(update.Message.Chat.ID, update.Message.Text)
-		msg.ReplyParameters.MessageID = update.Message.MessageID
-
-		bot.Send(msg)
-	}
-}
-
-func ExampleNewWebhook() {
-	bot, err := NewBotAPI("MyAwesomeBotToken")
-	if err != nil {
-		panic(err)
-	}
-
-	bot.Debug = true
-
-	log.Printf("Authorized on account %s", bot.Self.UserName)
-
-	wh, err := NewWebhookWithCert("https://www.google.com:8443/"+bot.Token, FilePath("cert.pem"))
-
-	if err != nil {
-		panic(err)
-	}
-
-	_, err = bot.Request(wh)
-
-	if err != nil {
-		panic(err)
-	}
-
-	info, err := bot.GetWebhookInfo()
-
-	if err != nil {
-		panic(err)
-	}
-
-	if info.LastErrorDate != 0 {
-		log.Printf("failed to set webhook: %s", info.LastErrorMessage)
-	}
-
-	updates := bot.ListenForWebhook("/" + bot.Token)
-	go http.ListenAndServeTLS("0.0.0.0:8443", "cert.pem", "key.pem", nil)
-
-	for update := range updates {
-		log.Printf("%+v\n", update)
-	}
-}
-
-func ExampleWebhookHandler() {
-	bot, err := NewBotAPI("MyAwesomeBotToken")
-	if err != nil {
-		panic(err)
-	}
-
-	bot.Debug = true
-
-	log.Printf("Authorized on account %s", bot.Self.UserName)
-
-	wh, err := NewWebhookWithCert("https://www.google.com:8443/"+bot.Token, FilePath("cert.pem"))
-
-	if err != nil {
-		panic(err)
-	}
-
-	_, err = bot.Request(wh)
-	if err != nil {
-		panic(err)
-	}
-	info, err := bot.GetWebhookInfo()
-	if err != nil {
-		panic(err)
-	}
-	if info.LastErrorDate != 0 {
-		log.Printf("[Telegram callback failed]%s", info.LastErrorMessage)
-	}
-
-	http.HandleFunc("/"+bot.Token, func(w http.ResponseWriter, r *http.Request) {
-		update, err := bot.HandleUpdate(r)
-		if err != nil {
-			log.Printf("%+v\n", err.Error())
-		} else {
-			log.Printf("%+v\n", *update)
-		}
-	})
-
-	go http.ListenAndServeTLS("0.0.0.0:8443", "cert.pem", "key.pem", nil)
-}
-
-func ExampleInlineConfig() {
-	bot, err := NewBotAPI("MyAwesomeBotToken") // create new bot
-	if err != nil {
-		panic(err)
-	}
-
-	log.Printf("Authorized on account %s", bot.Self.UserName)
-
-	u := NewUpdate(0)
-	u.Timeout = 60
-
-	updates := bot.GetUpdatesChan(u)
-
-	for update := range updates {
-		if update.InlineQuery == nil { // if no inline query, ignore it
-			continue
-		}
-
-		article := NewInlineQueryResultArticle(update.InlineQuery.ID, "Echo", update.InlineQuery.Query)
-		article.Description = update.InlineQuery.Query
-
-		inlineConf := InlineConfig{
-			InlineQueryID: update.InlineQuery.ID,
-			IsPersonal:    true,
-			CacheTime:     0,
-			Results:       []interface{}{article},
-		}
-
-		if _, err := bot.Request(inlineConf); err != nil {
-			log.Println(err)
-		}
-	}
-}
-
 func TestDeleteMessage(t *testing.T) {
 	bot, _ := getBot(t)
 
@@ -1020,33 +870,6 @@ func TestCommands(t *testing.T) {
 		t.Error("Commands were incorrectly set")
 	}
 }
-
-// TODO: figure out why test is failing
-//
-// func TestEditMessageMedia(t *testing.T) {
-// 	bot, _ := getBot(t)
-
-// 	msg := NewPhoto(ChatID, "tests/image.jpg")
-// 	msg.Caption = "Test"
-// 	m, err := bot.Send(msg)
-
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-
-// 	edit := EditMessageMediaConfig{
-// 		BaseEdit: BaseEdit{
-// 			ChatID:    ChatID,
-// 			MessageID: m.MessageID,
-// 		},
-// 		Media: NewInputMediaVideo(FilePath("tests/video.mp4")),
-// 	}
-
-// 	_, err = bot.Request(edit)
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-// }
 
 func TestPrepareInputMediaForParams(t *testing.T) {
 	media := []interface{}{
