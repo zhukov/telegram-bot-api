@@ -199,14 +199,14 @@ func TestNewInlineKeyboardButtonSwitchInlineQueryChoosenChat(t *testing.T) {
 
 func TestNewEditMessageMedia(t *testing.T) {
 	baseInputMedia := NewBaseInputMedia("photo", FileID("test"))
-	edit := NewEditMessageMedia(ChatID, ReplyToMessageID, baseInputMedia)
+	edit := NewEditMessageMedia(ChatID, ReplyToMessageID, &baseInputMedia)
 
 	if edit.Media == nil {
 		t.Fail()
 		return
 	}
 
-	if media, ok := edit.Media.(BaseInputMedia); !ok ||
+	if media, ok := edit.Media.(*BaseInputMedia); !ok ||
 		media.Type != "photo" ||
 		media.Media != baseInputMedia.Media ||
 		edit.BaseEdit.ChatID != ChatID ||
@@ -224,7 +224,7 @@ func TestNewEditMessagePhoto(t *testing.T) {
 		return
 	}
 
-	if media, ok := edit.Media.(InputMediaPhoto); !ok ||
+	if media, ok := edit.Media.(*InputMediaPhoto); !ok ||
 		media.Type != "photo" ||
 		media.Media != inputMediaPhoto.Media ||
 		edit.BaseEdit.ChatID != ChatID ||
@@ -242,7 +242,7 @@ func TestNewEditMessageVideo(t *testing.T) {
 		return
 	}
 
-	if media, ok := edit.Media.(InputMediaVideo); !ok ||
+	if media, ok := edit.Media.(*InputMediaVideo); !ok ||
 		media.Type != "video" ||
 		media.Media != inputMediaVideo.Media ||
 		edit.BaseEdit.ChatID != ChatID ||
@@ -260,7 +260,7 @@ func TestNewEditMessageAnimation(t *testing.T) {
 		return
 	}
 
-	if media, ok := edit.Media.(InputMediaAnimation); !ok ||
+	if media, ok := edit.Media.(*InputMediaAnimation); !ok ||
 		media.Type != "animation" ||
 		media.Media != inputMediaAnimation.Media ||
 		edit.BaseEdit.ChatID != ChatID ||
@@ -278,7 +278,7 @@ func TestNewEditMessageAudio(t *testing.T) {
 		return
 	}
 
-	if media, ok := edit.Media.(InputMediaAudio); !ok ||
+	if media, ok := edit.Media.(*InputMediaAudio); !ok ||
 		media.Type != "audio" ||
 		media.Media != inputMediaAudio.Media ||
 		edit.BaseEdit.ChatID != ChatID ||
@@ -296,7 +296,7 @@ func TestNewEditMessageDocument(t *testing.T) {
 		return
 	}
 
-	if media, ok := edit.Media.(InputMediaDocument); !ok ||
+	if media, ok := edit.Media.(*InputMediaDocument); !ok ||
 		media.Type != "document" ||
 		media.Media != inputMediaDocument.Media ||
 		edit.BaseEdit.ChatID != ChatID ||
@@ -341,7 +341,6 @@ func TestNewEditMessageReplyMarkup(t *testing.T) {
 		edit.BaseEdit.MessageID != ReplyToMessageID {
 		t.Fail()
 	}
-
 }
 
 func TestNewDice(t *testing.T) {
