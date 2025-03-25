@@ -3305,20 +3305,34 @@ func ptr[T any](v T) *T {
 func cloneMediaSlice(media []InputMedia) []InputMedia {
 	cloned := make([]InputMedia, len(media))
 	for i, m := range media {
-		switch m := m.(type) {
-		case *InputMediaPhoto:
-			cloned[i] = ptr(*m)
-		case *InputMediaVideo:
-			cloned[i] = ptr(*m)
-		case *InputMediaAnimation:
-			cloned[i] = ptr(*m)
-		case *InputMediaAudio:
-			cloned[i] = ptr(*m)
-		case *InputMediaDocument:
-			cloned[i] = ptr(*m)
-		case *InputPaidMedia:
-			cloned[i] = ptr(*m)
-		}
+		cloned[i] = cloneInputMedia(m)
 	}
 	return cloned
+}
+
+func cloneInputMedia(media InputMedia) InputMedia {
+	switch m := media.(type) {
+	case *InputMediaPhoto:
+		return ptr(*m)
+	case *InputMediaVideo:
+		return ptr(*m)
+	case *InputMediaAnimation:
+		return ptr(*m)
+	case *InputMediaAudio:
+		return ptr(*m)
+	case *InputMediaDocument:
+		return ptr(*m)
+	case *InputPaidMedia:
+		clone := &InputPaidMedia{
+			Type:              m.Type,
+			Thumb:             m.Thumb,
+			Width:             m.Width,
+			Height:            m.Height,
+			Duration:          m.Duration,
+			SupportsStreaming: m.SupportsStreaming,
+			Media:             cloneInputMedia(m.Media),
+		}
+		return clone
+	}
+	return nil
 }
