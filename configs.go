@@ -3311,6 +3311,10 @@ func cloneMediaSlice(media []InputMedia) []InputMedia {
 }
 
 func cloneInputMedia(media InputMedia) InputMedia {
+	if media == nil {
+		return nil
+	}
+
 	switch m := media.(type) {
 	case *InputMediaPhoto:
 		return ptr(*m)
@@ -3330,7 +3334,9 @@ func cloneInputMedia(media InputMedia) InputMedia {
 			Height:            m.Height,
 			Duration:          m.Duration,
 			SupportsStreaming: m.SupportsStreaming,
-			Media:             cloneInputMedia(m.Media),
+		}
+		if m.Media != nil {
+			clone.Media = cloneInputMedia(m.Media)
 		}
 		return clone
 	}
