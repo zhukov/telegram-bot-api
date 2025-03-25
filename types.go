@@ -3534,6 +3534,31 @@ func (media *InputPaidMedia) setUploadThumb(fileRef string) {
 	media.Thumb = fileAttach(fileRef)
 }
 
+// getType returns the type of the input paid media
+func (media *PaidMediaConfig) getType() string {
+	return media.Media.getType()
+}
+
+// getMedia returns the media file data
+func (media *PaidMediaConfig) getMedia() RequestFileData {
+	return media.Media.getMedia()
+}
+
+// getThumb returns the thumbnail for the paid media
+func (media *PaidMediaConfig) getThumb() RequestFileData {
+	return media.Media.getThumb()
+}
+
+// setUploadMedia sets the media to a file attachment reference
+func (media *PaidMediaConfig) setUploadMedia(fileRef string) {
+	media.Media.setUploadMedia(fileRef)
+}
+
+// setUploadThumb sets the thumbnail to a file attachment reference
+func (media *PaidMediaConfig) setUploadThumb(fileRef string) {
+	media.Media.setUploadThumb(fileRef)
+}
+
 // InputMediaPhoto is a photo to send as part of a media group.
 type InputMediaPhoto struct {
 	BaseInputMedia
