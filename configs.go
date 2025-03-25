@@ -597,7 +597,7 @@ func (config DocumentConfig) files() []RequestFile {
 
 // StickerConfig contains information about a SendSticker request.
 type StickerConfig struct {
-	//Emoji associated with the sticker; only for just uploaded stickers
+	// Emoji associated with the sticker; only for just uploaded stickers
 	Emoji string
 	BaseFile
 }
@@ -904,7 +904,7 @@ type EditMessageLiveLocationConfig struct {
 	BaseEdit
 	Latitude             float64 // required
 	Longitude            float64 // required
-	LivePeriod           int     //optional
+	LivePeriod           int     // optional
 	HorizontalAccuracy   float64 // optional
 	Heading              int     // optional
 	ProximityAlertRadius int     // optional
@@ -1406,7 +1406,7 @@ func (config DeleteWebhookConfig) params() (Params, error) {
 
 // InlineQueryResultsButton represents a button to be shown above inline query results. You must use exactly one of the optional fields.
 type InlineQueryResultsButton struct {
-	//Label text on the button
+	// Label text on the button
 	Text string `json:"text"`
 	//Description of the Web App that will be launched when the user presses the button. The Web App will be able to switch back to the inline mode using the method switchInlineQuery inside the Web App.
 	//
@@ -2056,12 +2056,12 @@ func (config InvoiceConfig) method() string {
 
 // InvoiceLinkConfig contains information for createInvoiceLink method
 type InvoiceLinkConfig struct {
-	Title                     string         //Required
-	Description               string         //Required
-	Payload                   string         //Required
-	ProviderToken             string         //Required
-	Currency                  string         //Required
-	Prices                    []LabeledPrice //Required
+	Title                     string         // Required
+	Description               string         // Required
+	Payload                   string         // Required
+	ProviderToken             string         // Required
+	Currency                  string         // Required
+	Prices                    []LabeledPrice // Required
 	MaxTipAmount              int
 	SuggestedTipAmounts       []int
 	ProviderData              string
@@ -2180,8 +2180,8 @@ func (config GetStarTransactionsConfig) params() (Params, error) {
 // RefundStarPaymentConfig refunds a successful payment in Telegram Stars.
 // Returns True on success.
 type RefundStarPaymentConfig struct {
-	UserID                  int64  //required
-	TelegramPaymentChargeID string //required
+	UserID                  int64  // required
+	TelegramPaymentChargeID string // required
 }
 
 func (config RefundStarPaymentConfig) method() string {
@@ -2410,7 +2410,7 @@ type NewStickerSetConfig struct {
 	Title           string
 	Stickers        []InputSticker
 	StickerType     string
-	NeedsRepainting bool //optional; Pass True if stickers in the sticker set must be repainted to the color of text when used in messages, the accent color if used as emoji status, white on chat photos, or another appropriate color based on context; for custom emoji sticker sets only
+	NeedsRepainting bool // optional; Pass True if stickers in the sticker set must be repainted to the color of text when used in messages, the accent color if used as emoji status, white on chat photos, or another appropriate color based on context; for custom emoji sticker sets only
 }
 
 func (config NewStickerSetConfig) method() string {
@@ -3099,7 +3099,7 @@ func (config GetMyDescriptionConfig) params() (Params, error) {
 type SetMyDescriptionConfig struct {
 	// Pass an empty string to remove the dedicated description for the given language.
 	Description string
-	//If empty, the description will be applied to all users for whose language there is no dedicated description.
+	// If empty, the description will be applied to all users for whose language there is no dedicated description.
 	LanguageCode string
 }
 
@@ -3300,6 +3300,11 @@ func prepareInputMediaParam(inputMedia interface{}, idx int) interface{} {
 // It is expected to be used in conjunction with prepareInputMediaParam.
 func prepareInputMediaFile(inputMedia interface{}, idx int) []RequestFile {
 	files := []RequestFile{}
+
+	// Unwrap the PaidMediaConfig to get the media
+	if paidMedia, ok := inputMedia.(PaidMediaConfig); ok {
+		inputMedia = paidMedia.Media
+	}
 
 	switch m := inputMedia.(type) {
 	case InputMediaPhoto:
