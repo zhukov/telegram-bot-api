@@ -3396,6 +3396,14 @@ type ResponseParameters struct {
 	RetryAfter int `json:"retry_after,omitempty"`
 }
 
+type InputMedia interface {
+	getType() string
+	getMedia() RequestFileData
+	getThumb() RequestFileData
+	setUploadMedia(string)
+	setUploadThumb(string)
+}
+
 // BaseInputMedia is a base type for the InputMedia types.
 type BaseInputMedia struct {
 	// Type of the result.
@@ -3431,6 +3439,96 @@ type BaseInputMedia struct {
 	//
 	// optional
 	HasSpoiler bool `json:"has_spoiler,omitempty"`
+}
+
+// getType returns the type of the input media
+func (media *BaseInputMedia) getType() string {
+	return media.Type
+}
+
+// getMedia returns the media file data
+func (media *BaseInputMedia) getMedia() RequestFileData {
+	return media.Media
+}
+
+// getThumb returns nil for base media as it has no thumbnail
+func (media *BaseInputMedia) getThumb() RequestFileData {
+	return nil
+}
+
+// setUploadMedia sets the media to a file attachment reference
+func (media *BaseInputMedia) setUploadMedia(fileRef string) {
+	media.Media = fileAttach(fileRef)
+}
+
+// setUploadThumb does nothing for base media as it has no thumbnail
+func (media *BaseInputMedia) setUploadThumb(_ string) {
+	// Nothing to do for base media
+}
+
+// getThumb returns the thumbnail for video media
+func (media *InputMediaVideo) getThumb() RequestFileData {
+	return media.Thumb
+}
+
+// setUploadThumb sets the thumbnail to a file attachment reference
+func (media *InputMediaVideo) setUploadThumb(fileRef string) {
+	media.Thumb = fileAttach(fileRef)
+}
+
+// getThumb returns the thumbnail for animation media
+func (media *InputMediaAnimation) getThumb() RequestFileData {
+	return media.Thumb
+}
+
+// setUploadThumb sets the thumbnail to a file attachment reference
+func (media *InputMediaAnimation) setUploadThumb(fileRef string) {
+	media.Thumb = fileAttach(fileRef)
+}
+
+// getThumb returns the thumbnail for audio media
+func (media *InputMediaAudio) getThumb() RequestFileData {
+	return media.Thumb
+}
+
+// setUploadThumb sets the thumbnail to a file attachment reference
+func (media *InputMediaAudio) setUploadThumb(fileRef string) {
+	media.Thumb = fileAttach(fileRef)
+}
+
+// getThumb returns the thumbnail for document media
+func (media *InputMediaDocument) getThumb() RequestFileData {
+	return media.Thumb
+}
+
+// setUploadThumb sets the thumbnail to a file attachment reference
+func (media *InputMediaDocument) setUploadThumb(fileRef string) {
+	media.Thumb = fileAttach(fileRef)
+}
+
+// getType returns the type of the input paid media
+func (media *InputPaidMedia) getType() string {
+	return media.Type
+}
+
+// getMedia returns the media file data
+func (media *InputPaidMedia) getMedia() RequestFileData {
+	return media.Media
+}
+
+// getThumb returns the thumbnail for the paid media
+func (media *InputPaidMedia) getThumb() RequestFileData {
+	return media.Thumb
+}
+
+// setUploadMedia sets the media to a file attachment reference
+func (media *InputPaidMedia) setUploadMedia(fileRef string) {
+	media.Media = fileAttach(fileRef)
+}
+
+// setUploadThumb sets the thumbnail to a file attachment reference
+func (media *InputPaidMedia) setUploadThumb(fileRef string) {
+	media.Thumb = fileAttach(fileRef)
 }
 
 // InputMediaPhoto is a photo to send as part of a media group.

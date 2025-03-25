@@ -199,14 +199,14 @@ func TestNewInlineKeyboardButtonSwitchInlineQueryChoosenChat(t *testing.T) {
 
 func TestNewEditMessageMedia(t *testing.T) {
 	baseInputMedia := NewBaseInputMedia("photo", FileID("test"))
-	edit := NewEditMessageMedia(ChatID, ReplyToMessageID, baseInputMedia)
+	edit := NewEditMessageMedia(ChatID, ReplyToMessageID, &baseInputMedia)
 
 	if edit.Media == nil {
 		t.Fail()
 		return
 	}
 
-	if media, ok := edit.Media.(BaseInputMedia); !ok ||
+	if media, ok := edit.Media.(*BaseInputMedia); !ok ||
 		media.Type != "photo" ||
 		media.Media != baseInputMedia.Media ||
 		edit.BaseEdit.ChatID != ChatID ||
@@ -217,14 +217,14 @@ func TestNewEditMessageMedia(t *testing.T) {
 
 func TestNewEditMessagePhoto(t *testing.T) {
 	inputMediaPhoto := NewInputMediaPhoto(FilePath("tests/image.jpg"))
-	edit := NewEditMessagePhoto(ChatID, ReplyToMessageID, inputMediaPhoto)
+	edit := NewEditMessagePhoto(ChatID, ReplyToMessageID, &inputMediaPhoto)
 
 	if edit.Media == nil {
 		t.Fail()
 		return
 	}
 
-	if media, ok := edit.Media.(InputMediaPhoto); !ok ||
+	if media, ok := edit.Media.(*InputMediaPhoto); !ok ||
 		media.Type != "photo" ||
 		media.Media != inputMediaPhoto.Media ||
 		edit.BaseEdit.ChatID != ChatID ||
@@ -235,14 +235,14 @@ func TestNewEditMessagePhoto(t *testing.T) {
 
 func TestNewEditMessageVideo(t *testing.T) {
 	inputMediaVideo := NewInputMediaVideo(FilePath("tests/video.mp4"))
-	edit := NewEditMessageVideo(ChatID, ReplyToMessageID, inputMediaVideo)
+	edit := NewEditMessageVideo(ChatID, ReplyToMessageID, &inputMediaVideo)
 
 	if edit.Media == nil {
 		t.Fail()
 		return
 	}
 
-	if media, ok := edit.Media.(InputMediaVideo); !ok ||
+	if media, ok := edit.Media.(*InputMediaVideo); !ok ||
 		media.Type != "video" ||
 		media.Media != inputMediaVideo.Media ||
 		edit.BaseEdit.ChatID != ChatID ||
@@ -253,14 +253,14 @@ func TestNewEditMessageVideo(t *testing.T) {
 
 func TestNewEditMessageAnimation(t *testing.T) {
 	inputMediaAnimation := NewInputMediaAnimation(FileID("test"))
-	edit := NewEditMessageAnimation(ChatID, ReplyToMessageID, inputMediaAnimation)
+	edit := NewEditMessageAnimation(ChatID, ReplyToMessageID, &inputMediaAnimation)
 
 	if edit.Media == nil {
 		t.Fail()
 		return
 	}
 
-	if media, ok := edit.Media.(InputMediaAnimation); !ok ||
+	if media, ok := edit.Media.(*InputMediaAnimation); !ok ||
 		media.Type != "animation" ||
 		media.Media != inputMediaAnimation.Media ||
 		edit.BaseEdit.ChatID != ChatID ||
@@ -271,14 +271,14 @@ func TestNewEditMessageAnimation(t *testing.T) {
 
 func TestNewEditMessageAudio(t *testing.T) {
 	inputMediaAudio := NewInputMediaAudio(FileID("test"))
-	edit := NewEditMessageAudio(ChatID, ReplyToMessageID, inputMediaAudio)
+	edit := NewEditMessageAudio(ChatID, ReplyToMessageID, &inputMediaAudio)
 
 	if edit.Media == nil {
 		t.Fail()
 		return
 	}
 
-	if media, ok := edit.Media.(InputMediaAudio); !ok ||
+	if media, ok := edit.Media.(*InputMediaAudio); !ok ||
 		media.Type != "audio" ||
 		media.Media != inputMediaAudio.Media ||
 		edit.BaseEdit.ChatID != ChatID ||
@@ -289,14 +289,14 @@ func TestNewEditMessageAudio(t *testing.T) {
 
 func TestNewEditMessageDocument(t *testing.T) {
 	inputMediaDocument := NewInputMediaDocument(FileID("test"))
-	edit := NewEditMessageDocument(ChatID, ReplyToMessageID, inputMediaDocument)
+	edit := NewEditMessageDocument(ChatID, ReplyToMessageID, &inputMediaDocument)
 
 	if edit.Media == nil {
 		t.Fail()
 		return
 	}
 
-	if media, ok := edit.Media.(InputMediaDocument); !ok ||
+	if media, ok := edit.Media.(*InputMediaDocument); !ok ||
 		media.Type != "document" ||
 		media.Media != inputMediaDocument.Media ||
 		edit.BaseEdit.ChatID != ChatID ||
@@ -341,7 +341,6 @@ func TestNewEditMessageReplyMarkup(t *testing.T) {
 		edit.BaseEdit.MessageID != ReplyToMessageID {
 		t.Fail()
 	}
-
 }
 
 func TestNewDice(t *testing.T) {

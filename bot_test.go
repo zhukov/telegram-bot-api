@@ -33,7 +33,11 @@ func (t testLogger) Printf(format string, v ...interface{}) {
 }
 
 func getBot(t *testing.T) (*BotAPI, error) {
-	bot, err := NewBotAPI(os.Getenv("TEST_TOKEN"))
+	token := os.Getenv("TEST_TOKEN")
+	if token == "" {
+		t.Skip("TEST_TOKEN is not set")
+	}
+	bot, err := NewBotAPI(token)
 	bot.Debug = true
 
 	logger := testLogger{t}
@@ -565,10 +569,10 @@ func TestSetWebhookWithoutCert(t *testing.T) {
 func TestSendWithMediaGroupPhotoVideo(t *testing.T) {
 	bot, _ := getBot(t)
 
-	cfg := NewMediaGroup(ChatID, []interface{}{
-		NewInputMediaPhoto(FileURL("https://github.com/go-telegram-bot-api/telegram-bot-api/raw/0a3a1c8716c4cd8d26a262af9f12dcbab7f3f28c/tests/image.jpg")),
-		NewInputMediaPhoto(FilePath("tests/image.jpg")),
-		NewInputMediaVideo(FilePath("tests/video.mp4")),
+	cfg := NewMediaGroup(ChatID, []InputMedia{
+		ptr(NewInputMediaPhoto(FileURL("https://github.com/go-telegram-bot-api/telegram-bot-api/raw/0a3a1c8716c4cd8d26a262af9f12dcbab7f3f28c/tests/image.jpg"))),
+		ptr(NewInputMediaPhoto(FilePath("tests/image.jpg"))),
+		ptr(NewInputMediaVideo(FilePath("tests/video.mp4"))),
 	})
 
 	messages, err := bot.SendMediaGroup(cfg)
@@ -588,9 +592,9 @@ func TestSendWithMediaGroupPhotoVideo(t *testing.T) {
 func TestSendWithMediaGroupDocument(t *testing.T) {
 	bot, _ := getBot(t)
 
-	cfg := NewMediaGroup(ChatID, []interface{}{
-		NewInputMediaDocument(FileURL("https://i.imgur.com/unQLJIb.jpg")),
-		NewInputMediaDocument(FilePath("tests/image.jpg")),
+	cfg := NewMediaGroup(ChatID, []InputMedia{
+		ptr(NewInputMediaDocument(FileURL("https://i.imgur.com/unQLJIb.jpg"))),
+		ptr(NewInputMediaDocument(FilePath("tests/image.jpg"))),
 	})
 
 	messages, err := bot.SendMediaGroup(cfg)
@@ -610,9 +614,9 @@ func TestSendWithMediaGroupDocument(t *testing.T) {
 func TestSendWithMediaGroupAudio(t *testing.T) {
 	bot, _ := getBot(t)
 
-	cfg := NewMediaGroup(ChatID, []interface{}{
-		NewInputMediaAudio(FilePath("tests/audio.mp3")),
-		NewInputMediaAudio(FilePath("tests/audio.mp3")),
+	cfg := NewMediaGroup(ChatID, []InputMedia{
+		ptr(NewInputMediaAudio(FilePath("tests/audio.mp3"))),
+		ptr(NewInputMediaAudio(FilePath("tests/audio.mp3"))),
 	})
 
 	messages, err := bot.SendMediaGroup(cfg)
@@ -830,22 +834,22 @@ func TestCommands(t *testing.T) {
 }
 
 func TestPrepareInputMediaForParams(t *testing.T) {
-	media := []interface{}{
-		NewInputMediaPhoto(FilePath("tests/image.jpg")),
-		NewInputMediaVideo(FileID("test")),
+	media := []InputMedia{
+		ptr(NewInputMediaPhoto(FilePath("tests/image.jpg"))),
+		ptr(NewInputMediaVideo(FileID("test"))),
 	}
 
 	prepared := prepareInputMediaForParams(media)
 
-	if media[0].(InputMediaPhoto).Media != FilePath("tests/image.jpg") {
+	if media[0].(*InputMediaPhoto).Media != FilePath("tests/image.jpg") {
 		t.Error("Original media was changed")
 	}
 
-	if prepared[0].(InputMediaPhoto).Media != fileAttach("attach://file-0") {
+	if prepared[0].(*InputMediaPhoto).Media != fileAttach("attach://file-0") {
 		t.Error("New media was not replaced")
 	}
 
-	if prepared[1].(InputMediaVideo).Media != FileID("test") {
+	if prepared[1].(*InputMediaVideo).Media != FileID("test") {
 		t.Error("Passthrough value was not the same")
 	}
 }
