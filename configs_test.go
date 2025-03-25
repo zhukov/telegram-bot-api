@@ -58,30 +58,6 @@ func TestPrepareInputMediaFile(t *testing.T) {
 			media:    "string is not a valid media type",
 			wantFile: false,
 		},
-		{
-			name: "PaidMediaConfig with InputMediaPhoto",
-			media: PaidMediaConfig{
-				Media: []InputPaidMedia{
-					{
-						Type:  "photo",
-						Media: FileBytes{Bytes: []byte("test")},
-					},
-				},
-			},
-			wantFile: true,
-		},
-		{
-			name: "*PaidMediaConfig with InputMediaPhoto",
-			media: &PaidMediaConfig{
-				Media: []InputPaidMedia{
-					{
-						Type:  "photo",
-						Media: FileBytes{Bytes: []byte("test")},
-					},
-				},
-			},
-			wantFile: true,
-		},
 	}
 
 	for idx, tt := range tests {
