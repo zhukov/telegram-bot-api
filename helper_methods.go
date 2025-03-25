@@ -630,28 +630,28 @@ func NewEditMessageMedia(chatID int64, messageID int, inputMedia InputMedia) Edi
 }
 
 // NewEditMessagePhoto allows you to edit the photo content of a message.
-func NewEditMessagePhoto(chatID int64, messageID int, inputPhoto *InputMediaPhoto) EditMessageMediaConfig {
-	return NewEditMessageMedia(chatID, messageID, inputPhoto)
+func NewEditMessagePhoto(chatID int64, messageID int, inputPhoto InputMediaPhoto) EditMessageMediaConfig {
+	return NewEditMessageMedia(chatID, messageID, &inputPhoto)
 }
 
 // NewEditMessageVideo allows you to edit the video content of a message.
-func NewEditMessageVideo(chatID int64, messageID int, inputVideo *InputMediaVideo) EditMessageMediaConfig {
-	return NewEditMessageMedia(chatID, messageID, inputVideo)
+func NewEditMessageVideo(chatID int64, messageID int, inputVideo InputMediaVideo) EditMessageMediaConfig {
+	return NewEditMessageMedia(chatID, messageID, &inputVideo)
 }
 
 // NewEditMessageAnimation allows you to edit the animation content of a message.
-func NewEditMessageAnimation(chatID int64, messageID int, inputAnimation *InputMediaAnimation) EditMessageMediaConfig {
-	return NewEditMessageMedia(chatID, messageID, inputAnimation)
+func NewEditMessageAnimation(chatID int64, messageID int, inputAnimation InputMediaAnimation) EditMessageMediaConfig {
+	return NewEditMessageMedia(chatID, messageID, &inputAnimation)
 }
 
 // NewEditMessageAudio allows you to edit the audio content of a message.
-func NewEditMessageAudio(chatID int64, messageID int, inputAudio *InputMediaAudio) EditMessageMediaConfig {
-	return NewEditMessageMedia(chatID, messageID, inputAudio)
+func NewEditMessageAudio(chatID int64, messageID int, inputAudio InputMediaAudio) EditMessageMediaConfig {
+	return NewEditMessageMedia(chatID, messageID, &inputAudio)
 }
 
 // NewEditMessageDocument allows you to edit the document content of a message.
-func NewEditMessageDocument(chatID int64, messageID int, inputDocument *InputMediaDocument) EditMessageMediaConfig {
-	return NewEditMessageMedia(chatID, messageID, inputDocument)
+func NewEditMessageDocument(chatID int64, messageID int, inputDocument InputMediaDocument) EditMessageMediaConfig {
+	return NewEditMessageMedia(chatID, messageID, &inputDocument)
 }
 
 // NewEditMessageText allows you to edit the text of a message.

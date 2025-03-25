@@ -217,7 +217,7 @@ func TestNewEditMessageMedia(t *testing.T) {
 
 func TestNewEditMessagePhoto(t *testing.T) {
 	inputMediaPhoto := NewInputMediaPhoto(FilePath("tests/image.jpg"))
-	edit := NewEditMessagePhoto(ChatID, ReplyToMessageID, &inputMediaPhoto)
+	edit := NewEditMessagePhoto(ChatID, ReplyToMessageID, inputMediaPhoto)
 
 	if edit.Media == nil {
 		t.Fail()
@@ -235,7 +235,7 @@ func TestNewEditMessagePhoto(t *testing.T) {
 
 func TestNewEditMessageVideo(t *testing.T) {
 	inputMediaVideo := NewInputMediaVideo(FilePath("tests/video.mp4"))
-	edit := NewEditMessageVideo(ChatID, ReplyToMessageID, &inputMediaVideo)
+	edit := NewEditMessageVideo(ChatID, ReplyToMessageID, inputMediaVideo)
 
 	if edit.Media == nil {
 		t.Fail()
@@ -253,7 +253,7 @@ func TestNewEditMessageVideo(t *testing.T) {
 
 func TestNewEditMessageAnimation(t *testing.T) {
 	inputMediaAnimation := NewInputMediaAnimation(FileID("test"))
-	edit := NewEditMessageAnimation(ChatID, ReplyToMessageID, &inputMediaAnimation)
+	edit := NewEditMessageAnimation(ChatID, ReplyToMessageID, inputMediaAnimation)
 
 	if edit.Media == nil {
 		t.Fail()
@@ -271,7 +271,7 @@ func TestNewEditMessageAnimation(t *testing.T) {
 
 func TestNewEditMessageAudio(t *testing.T) {
 	inputMediaAudio := NewInputMediaAudio(FileID("test"))
-	edit := NewEditMessageAudio(ChatID, ReplyToMessageID, &inputMediaAudio)
+	edit := NewEditMessageAudio(ChatID, ReplyToMessageID, inputMediaAudio)
 
 	if edit.Media == nil {
 		t.Fail()
@@ -289,7 +289,7 @@ func TestNewEditMessageAudio(t *testing.T) {
 
 func TestNewEditMessageDocument(t *testing.T) {
 	inputMediaDocument := NewInputMediaDocument(FileID("test"))
-	edit := NewEditMessageDocument(ChatID, ReplyToMessageID, &inputMediaDocument)
+	edit := NewEditMessageDocument(ChatID, ReplyToMessageID, inputMediaDocument)
 
 	if edit.Media == nil {
 		t.Fail()
