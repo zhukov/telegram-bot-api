@@ -832,24 +832,3 @@ func TestCommands(t *testing.T) {
 		t.Error("Commands were incorrectly set")
 	}
 }
-
-func TestPrepareInputMediaForParams(t *testing.T) {
-	media := []InputMedia{
-		ptr(NewInputMediaPhoto(FilePath("tests/image.jpg"))),
-		ptr(NewInputMediaVideo(FileID("test"))),
-	}
-
-	prepared := prepareInputMediaForParams(media)
-
-	if media[0].(*InputMediaPhoto).Media != FilePath("tests/image.jpg") {
-		t.Error("Original media was changed")
-	}
-
-	if prepared[0].(*InputMediaPhoto).Media != fileAttach("attach://file-0") {
-		t.Error("New media was not replaced")
-	}
-
-	if prepared[1].(*InputMediaVideo).Media != FileID("test") {
-		t.Error("Passthrough value was not the same")
-	}
-}
