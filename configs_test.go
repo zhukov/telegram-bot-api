@@ -299,3 +299,231 @@ func TestCloneMediaSlice(t *testing.T) {
 		}
 	}
 }
+
+func TestMediaGroupConfig(t *testing.T) {
+	tests := []struct {
+		name           string
+		config         MediaGroupConfig
+		expectedMethod string
+		expectedParams map[string]string
+		expectedFiles  int
+	}{
+		{
+			name: "basic media group with photos",
+			config: MediaGroupConfig{
+				BaseChat: BaseChat{
+					ChatConfig: ChatConfig{
+						ChatID: 12345,
+					},
+				},
+				Media: []InputMedia{
+					&InputMediaPhoto{
+						BaseInputMedia: BaseInputMedia{
+							Type:    "photo",
+							Media:   FilePath("tests/image1.jpg"),
+							Caption: "First photo",
+						},
+					},
+					&InputMediaPhoto{
+						BaseInputMedia: BaseInputMedia{
+							Type:    "photo",
+							Media:   FilePath("tests/image2.jpg"),
+							Caption: "Second photo",
+						},
+					},
+				},
+			},
+			expectedMethod: "sendMediaGroup",
+			expectedParams: map[string]string{
+				"chat_id": "12345",
+			},
+			expectedFiles: 2,
+		},
+		{
+			name: "media group with different media types",
+			config: MediaGroupConfig{
+				BaseChat: BaseChat{
+					ChatConfig: ChatConfig{
+						ChatID: 12345,
+					},
+				},
+				Media: []InputMedia{
+					&InputMediaPhoto{
+						BaseInputMedia: BaseInputMedia{
+							Type:    "photo",
+							Media:   FilePath("tests/image.jpg"),
+							Caption: "A photo",
+						},
+					},
+					&InputMediaVideo{
+						BaseInputMedia: BaseInputMedia{
+							Type:    "video",
+							Media:   FilePath("tests/video.mp4"),
+							Caption: "A video",
+						},
+						Thumb: FilePath("tests/thumb.jpg"),
+					},
+					&InputMediaDocument{
+						BaseInputMedia: BaseInputMedia{
+							Type:    "document",
+							Media:   FilePath("tests/document.pdf"),
+							Caption: "A document",
+						},
+					},
+				},
+			},
+			expectedMethod: "sendMediaGroup",
+			expectedParams: map[string]string{
+				"chat_id": "12345",
+			},
+			expectedFiles: 4, // 3 media files + 1 thumb
+		},
+		{
+			name: "media group with mixed file sources",
+			config: MediaGroupConfig{
+				BaseChat: BaseChat{
+					ChatConfig: ChatConfig{
+						ChatID: 12345,
+					},
+				},
+				Media: []InputMedia{
+					&InputMediaPhoto{
+						BaseInputMedia: BaseInputMedia{
+							Type:  "photo",
+							Media: FileID("photo123"),
+						},
+					},
+					&InputMediaVideo{
+						BaseInputMedia: BaseInputMedia{
+							Type:  "video",
+							Media: FileURL("https://example.com/video.mp4"),
+						},
+					},
+					&InputMediaPhoto{
+						BaseInputMedia: BaseInputMedia{
+							Type:  "photo",
+							Media: FilePath("tests/image.jpg"),
+						},
+					},
+				},
+			},
+			expectedMethod: "sendMediaGroup",
+			expectedParams: map[string]string{
+				"chat_id": "12345",
+			},
+			expectedFiles: 1, // Only one local file to upload
+		},
+		{
+			name: "media group with paid media",
+			config: MediaGroupConfig{
+				BaseChat: BaseChat{
+					ChatConfig: ChatConfig{
+						ChatID: 12345,
+					},
+				},
+				Media: []InputMedia{
+					&InputMediaPhoto{
+						BaseInputMedia: BaseInputMedia{
+							Type:  "photo",
+							Media: FilePath("tests/image.jpg"),
+						},
+					},
+					&InputPaidMedia{
+						Type: "video",
+						Media: &InputMediaVideo{
+							BaseInputMedia: BaseInputMedia{
+								Type:  "video",
+								Media: FilePath("tests/paid_video.mp4"),
+							},
+						},
+						Thumb: FilePath("tests/thumb.jpg"),
+					},
+				},
+			},
+			expectedMethod: "sendMediaGroup",
+			expectedParams: map[string]string{
+				"chat_id": "12345",
+			},
+			expectedFiles: 3, // 2 media files + 1 thumb
+		},
+		{
+			name: "media group with multiple paid media",
+			config: MediaGroupConfig{
+				BaseChat: BaseChat{
+					ChatConfig: ChatConfig{
+						ChatID: 12345,
+					},
+				},
+				Media: []InputMedia{
+					&InputPaidMedia{
+						Type: "photo",
+						Media: &InputMediaPhoto{
+							BaseInputMedia: BaseInputMedia{
+								Type:  "photo",
+								Media: FilePath("tests/paid_photo.jpg"),
+							},
+						},
+					},
+					&InputPaidMedia{
+						Type: "video",
+						Media: &InputMediaVideo{
+							BaseInputMedia: BaseInputMedia{
+								Type:  "video",
+								Media: FilePath("tests/paid_video.mp4"),
+							},
+							Duration: 30,
+							Width:    1280,
+							Height:   720,
+						},
+						Thumb:    FilePath("tests/thumb.jpg"),
+						Width:    1280,
+						Height:   720,
+						Duration: 30,
+					},
+				},
+			},
+			expectedMethod: "sendMediaGroup",
+			expectedParams: map[string]string{
+				"chat_id": "12345",
+			},
+			expectedFiles: 3, // 2 media files + 1 thumb
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			method := tt.config.method()
+			if method != tt.expectedMethod {
+				t.Errorf("Expected method %s, got %s", tt.expectedMethod, method)
+			}
+
+			params, err := tt.config.params()
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+
+			for key, value := range tt.expectedParams {
+				if params[key] != value {
+					t.Errorf("Expected param %s to be %s, got %s", key, value, params[key])
+				}
+			}
+
+			// Check that media field exists in params
+			if _, ok := params["media"]; !ok {
+				t.Error("Expected 'media' field in params")
+			}
+
+			files := tt.config.files()
+			if len(files) != tt.expectedFiles {
+				t.Errorf("Expected %d files, got %d", tt.expectedFiles, len(files))
+			}
+
+			// Verify that each file has a name
+			for i, file := range files {
+				if file.Name == "" {
+					t.Errorf("File at index %d has empty name", i)
+				}
+			}
+		})
+	}
+}
