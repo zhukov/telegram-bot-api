@@ -7,7 +7,7 @@ import (
 func TestPrepareInputMediaFile(t *testing.T) {
 	tests := []struct {
 		name     string
-		media    interface{}
+		media    any
 		wantFile bool
 	}{
 		{
@@ -61,6 +61,18 @@ func TestPrepareInputMediaFile(t *testing.T) {
 		{
 			name: "PaidMediaConfig with InputMediaPhoto",
 			media: PaidMediaConfig{
+				Media: []InputPaidMedia{
+					{
+						Type:  "photo",
+						Media: FileBytes{Bytes: []byte("test")},
+					},
+				},
+			},
+			wantFile: true,
+		},
+		{
+			name: "*PaidMediaConfig with InputMediaPhoto",
+			media: &PaidMediaConfig{
 				Media: []InputPaidMedia{
 					{
 						Type:  "photo",
