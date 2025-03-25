@@ -3258,25 +3258,8 @@ func (config GetMyDefaultAdministratorRightsConfig) params() (Params, error) {
 // prepareInputMediaForParams processes media items for API parameters.
 // It creates a copy of the media array with files prepared for upload.
 func prepareInputMediaForParams(inputMedia []InputMedia) []InputMedia {
-	newMedia := make([]InputMedia, len(inputMedia))
-	for i, media := range inputMedia {
-		switch media := media.(type) {
-		case *InputMediaPhoto:
-			newMedia[i] = ptr(*media)
-		case *InputMediaVideo:
-			newMedia[i] = ptr(*media)
-		case *InputMediaAnimation:
-			newMedia[i] = ptr(*media)
-		case *InputMediaAudio:
-			newMedia[i] = ptr(*media)
-		case *InputMediaDocument:
-			newMedia[i] = ptr(*media)
-		case *InputPaidMedia:
-			newMedia[i] = ptr(*media)
-		}
-	}
-
-	for idx, media := range newMedia {
+	newMedias := cloneMediaSlice(inputMedia)
+	for idx, media := range newMedias {
 		if media.getMedia().NeedsUpload() {
 			media.setUploadMedia(fmt.Sprintf("attach://file-%d", idx))
 		}
@@ -3285,10 +3268,10 @@ func prepareInputMediaForParams(inputMedia []InputMedia) []InputMedia {
 			media.setUploadThumb(fmt.Sprintf("attach://file-%d-thumb", idx))
 		}
 
-		newMedia[idx] = media
+		newMedias[idx] = media
 	}
 
-	return newMedia
+	return newMedias
 }
 
 // prepareInputMediaForFiles generates RequestFile objects for media items
@@ -3317,4 +3300,25 @@ func prepareInputMediaForFiles(inputMedia []InputMedia) []RequestFile {
 
 func ptr[T any](v T) *T {
 	return &v
+}
+
+func cloneMediaSlice(media []InputMedia) []InputMedia {
+	cloned := make([]InputMedia, len(media))
+	for i, m := range media {
+		switch m := m.(type) {
+		case *InputMediaPhoto:
+			cloned[i] = ptr(*m)
+		case *InputMediaVideo:
+			cloned[i] = ptr(*m)
+		case *InputMediaAnimation:
+			cloned[i] = ptr(*m)
+		case *InputMediaAudio:
+			cloned[i] = ptr(*m)
+		case *InputMediaDocument:
+			cloned[i] = ptr(*m)
+		case *InputPaidMedia:
+			cloned[i] = ptr(*m)
+		}
+	}
+	return cloned
 }
