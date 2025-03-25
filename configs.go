@@ -3298,15 +3298,20 @@ func prepareInputMediaParam(inputMedia interface{}, idx int) interface{} {
 // "file-%d" for the main file and "file-%d-thumb" for the thumbnail.
 //
 // It is expected to be used in conjunction with prepareInputMediaParam.
-func prepareInputMediaFile(inputMedia interface{}, idx int) []RequestFile {
+func prepareInputMediaFile(inputMedia any, idx int) []RequestFile {
 	files := []RequestFile{}
 
-	// Unwrap the PaidMediaConfig to get the media
-	if paidMedia, ok := inputMedia.(PaidMediaConfig); ok {
-		inputMedia = paidMedia.Media
-	}
-
 	switch m := inputMedia.(type) {
+	case PaidMediaConfig:
+		for _, media := range m.Media {
+			if media.Media.NeedsUpload() {
+				files = append(files, RequestFile{
+					Name: fmt.Sprintf("file-%d", idx),
+					Data: media.Media,
+				})
+			}
+		}
+
 	case InputMediaPhoto:
 		if m.Media.NeedsUpload() {
 			files = append(files, RequestFile{
