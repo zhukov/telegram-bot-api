@@ -89,8 +89,13 @@ func TestPrepareInputMediaForParams(t *testing.T) {
 			name: "paid media",
 			inputMedia: []InputMedia{
 				&InputPaidMedia{
-					Type:  "video",
-					Media: FilePath("tests/video.mp4"),
+					Type: "video",
+					Media: &InputMediaVideo{
+						BaseInputMedia: BaseInputMedia{
+							Type:  "video",
+							Media: FilePath("tests/video.mp4"),
+						},
+					},
 					Thumb: FilePath("tests/image.jpg"),
 				},
 			},
@@ -154,8 +159,13 @@ func TestPrepareInputMediaForFiles(t *testing.T) {
 			Thumb: FilePath("tests/image.jpg"),
 		},
 		&InputPaidMedia{
-			Type:  "video",
-			Media: FilePath("tests/video.mp4"),
+			Type: "video",
+			Media: &InputMediaVideo{
+				BaseInputMedia: BaseInputMedia{
+					Type:  "video",
+					Media: FilePath("tests/video.mp4"),
+				},
+			},
 			Thumb: FilePath("tests/image.jpg"),
 		},
 	}
@@ -230,8 +240,13 @@ func TestCloneMediaSlice(t *testing.T) {
 			Thumb: FilePath("doc-thumb.jpg"),
 		},
 		&InputPaidMedia{
-			Type:  "paid_media",
-			Media: FilePath("paid.jpg"),
+			Type: "video",
+			Media: &InputMediaVideo{
+				BaseInputMedia: BaseInputMedia{
+					Type:  "video",
+					Media: FilePath("tests/video.mp4"),
+				},
+			},
 			Thumb: FilePath("paid-thumb.jpg"),
 		},
 	}

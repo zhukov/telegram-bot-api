@@ -1277,7 +1277,7 @@ func NewPaidMedia(chatID, starCount int64, media *InputPaidMedia) PaidMediaConfi
 }
 
 // NewInputPaidMediaPhoto creates a new InputPaidMedia for photos.
-func NewInputPaidMediaPhoto(media RequestFileData) InputPaidMedia {
+func NewInputPaidMediaPhoto(media *InputMediaPhoto) InputPaidMedia {
 	return InputPaidMedia{
 		Type:  "photo",
 		Media: media,
@@ -1285,7 +1285,7 @@ func NewInputPaidMediaPhoto(media RequestFileData) InputPaidMedia {
 }
 
 // NewInputPaidMediaVideo creates a new InputPaidMedia for videos.
-func NewInputPaidMediaVideo(media RequestFileData) InputPaidMedia {
+func NewInputPaidMediaVideo(media *InputMediaVideo) InputPaidMedia {
 	return InputPaidMedia{
 		Type:  "video",
 		Media: media,
