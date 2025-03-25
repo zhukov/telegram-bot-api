@@ -3513,17 +3513,20 @@ func (media *InputPaidMedia) getType() string {
 
 // getMedia returns the media file data
 func (media *InputPaidMedia) getMedia() RequestFileData {
-	return media.Media
+	return media.Media.getMedia()
 }
 
 // getThumb returns the thumbnail for the paid media
 func (media *InputPaidMedia) getThumb() RequestFileData {
-	return media.Thumb
+	if media.Thumb != nil {
+		return media.Thumb
+	}
+	return media.Media.getThumb()
 }
 
 // setUploadMedia sets the media to a file attachment reference
 func (media *InputPaidMedia) setUploadMedia(fileRef string) {
-	media.Media = fileAttach(fileRef)
+	media.Media.setUploadMedia(fileRef)
 }
 
 // setUploadThumb sets the thumbnail to a file attachment reference
@@ -3642,7 +3645,7 @@ type InputPaidMedia struct {
 	// pass an HTTP URL for Telegram to get a file from the Internet,
 	// or pass "attach://<file_attach_name>" to upload a new one using multipart/form-data under <file_attach_name> name.
 	// More information on https://core.telegram.org/bots/api#sending-files
-	Media RequestFileData `json:"media"`
+	Media InputMedia
 	// InputPaidMediaVideo only.
 	// Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side.
 	// The thumbnail should be in JPEG format and less than 200 kB in size.
