@@ -3302,28 +3302,6 @@ func prepareInputMediaFile(inputMedia any, idx int) []RequestFile {
 	files := []RequestFile{}
 
 	switch m := inputMedia.(type) {
-	case PaidMediaConfig:
-		for _, media := range m.Media {
-			if media.Media.NeedsUpload() {
-				files = append(files, RequestFile{
-					Name: fmt.Sprintf("file-%d", idx),
-					Data: media.Media,
-				})
-			}
-		}
-	case *PaidMediaConfig:
-		if m == nil {
-			return files
-		}
-
-		for _, media := range m.Media {
-			if media.Media.NeedsUpload() {
-				files = append(files, RequestFile{
-					Name: fmt.Sprintf("file-%d", idx),
-					Data: media.Media,
-				})
-			}
-		}
 	case InputMediaPhoto:
 		if m.Media.NeedsUpload() {
 			files = append(files, RequestFile{
