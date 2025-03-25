@@ -63,7 +63,8 @@ func NewMessageToChannel(username string, text string) MessageConfig {
 		BaseChat: BaseChat{
 			ChatConfig: ChatConfig{
 				ChannelUsername: username,
-			}},
+			},
+		},
 		Text: text,
 	}
 }
@@ -361,7 +362,6 @@ func NewUpdate(offset int) UpdateConfig {
 // link is the url parsable link you wish to get the updates.
 func NewWebhook(link string) (WebhookConfig, error) {
 	u, err := url.Parse(link)
-
 	if err != nil {
 		return WebhookConfig{}, err
 	}
@@ -377,7 +377,6 @@ func NewWebhook(link string) (WebhookConfig, error) {
 // file contains a string to a file, FileReader, or FileBytes.
 func NewWebhookWithCert(link string, file RequestFileData) (WebhookConfig, error) {
 	u, err := url.Parse(link)
-
 	if err != nil {
 		return WebhookConfig{}, err
 	}

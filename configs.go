@@ -2921,7 +2921,7 @@ type DiceConfig struct {
 	// Currently, must be one of 🎲, 🎯, 🏀, ⚽, 🎳, or 🎰.
 	// Dice can have values 1-6 for 🎲, 🎯, and 🎳, values 1-5 for 🏀 and ⚽,
 	// and values 1-64 for 🎰.
-	// Defaults to “🎲”
+	// Defaults to "🎲"
 	Emoji string
 }
 
