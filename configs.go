@@ -3339,6 +3339,30 @@ func cloneInputMedia(media InputMedia) InputMedia {
 			clone.Media = cloneInputMedia(m.Media)
 		}
 		return clone
+	case *PaidMediaConfig:
+		clone := &PaidMediaConfig{
+			BaseChat:              m.BaseChat,
+			StarCount:             m.StarCount,
+			Payload:               m.Payload,
+			Caption:               m.Caption,
+			ParseMode:             m.ParseMode,
+			CaptionEntities:       m.CaptionEntities,
+			ShowCaptionAboveMedia: m.ShowCaptionAboveMedia,
+		}
+		if m.Media != nil {
+			clone.Media = &InputPaidMedia{
+				Type:              m.Media.Type,
+				Thumb:             m.Media.Thumb,
+				Width:             m.Media.Width,
+				Height:            m.Media.Height,
+				Duration:          m.Media.Duration,
+				SupportsStreaming: m.Media.SupportsStreaming,
+			}
+			if m.Media.Media != nil {
+				clone.Media.Media = cloneInputMedia(m.Media.Media)
+			}
+		}
+		return clone
 	}
 	return nil
 }
