@@ -5299,7 +5299,7 @@ type StarTransaction struct {
 	// Only for outgoing transactions
 	//
 	// optional
-	Reciever *TransactionPartner `json:"reciever,omitempty"`
+	Receiver *TransactionPartner `json:"receiver,omitempty"`
 }
 
 // StarTransactions contains a list of Telegram Star transactions.
