@@ -2512,6 +2512,10 @@ type InlineKeyboardButton struct {
 	//
 	//optional
 	SwitchInlineQueryChosenChat *SwitchInlineQueryChosenChat `json:"switch_inline_query_chosen_chat,omitempty"`
+	//CopyText is the description of the button that copies the specified text to the clipboard.
+	//
+	//optional
+	CopyText *CopyTextButton `json:"copy_text,omitempty"`
 	// CallbackGame description of the game that will be launched when the user presses the button.
 	//
 	// optional
@@ -2557,6 +2561,12 @@ type LoginURL struct {
 	//
 	// optional
 	RequestWriteAccess bool `json:"request_write_access,omitempty"`
+}
+
+// CopyTextButton represents an inline keyboard button that
+// copies specified text to the clipboard.
+type CopyTextButton struct {
+	Text string `json:"text"`
 }
 
 // CallbackQuery represents an incoming callback query from a callback button in
@@ -5233,6 +5243,7 @@ type RevenueWithdrawalState struct {
 //   - TransactionPartnerUser
 //   - TransactionPartnerFragment
 //   - TransactionPartnerTelegramAds
+//   - TransactionPartnerTelegramApi
 //   - TransactionPartnerOther
 type TransactionPartner struct {
 	// Type of the transaction partner. Must be one of:
@@ -5240,6 +5251,7 @@ type TransactionPartner struct {
 	//	- user
 	//  - other
 	//  - telegram_ads
+	//	- telegram_api
 	Type string `json:"type"`
 	// State of the transaction if the transaction is outgoing.
 	// Represent only in "fragment" state
@@ -5260,6 +5272,12 @@ type TransactionPartner struct {
 	//
 	// optional
 	PaidMedia []PaidMedia `json:"paid_media,omitempty"`
+	// RequestCount is the number of successful requests that
+	// exceeded regular limits and were therefore billed
+	// Represent only in "telegram_api" state
+	//
+	// optional
+	RequestCount int `json:"request_count,omitempty"`
 }
 
 // StarTransaction describes a Telegram Star transaction.
