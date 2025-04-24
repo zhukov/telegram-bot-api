@@ -297,6 +297,7 @@ var (
 	_ Chattable = DeleteChatPhotoConfig{}
 	_ Chattable = DeleteChatStickerSetConfig{}
 	_ Chattable = DeleteMessageConfig{}
+	_ Chattable = GetAvailableGiftsConfig{}
 	_ Chattable = DeleteMyCommandsConfig{}
 	_ Chattable = DeleteWebhookConfig{}
 	_ Chattable = DocumentConfig{}
@@ -347,6 +348,7 @@ var (
 	_ Chattable = UpdateConfig{}
 	_ Chattable = SetMessageReactionConfig{}
 	_ Chattable = UserProfilePhotosConfig{}
+	_ Chattable = SetUserEmojiStatusConfig{}
 	_ Chattable = VenueConfig{}
 	_ Chattable = VideoConfig{}
 	_ Chattable = VideoNoteConfig{}

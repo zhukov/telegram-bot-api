@@ -3226,6 +3226,38 @@ type ForumTopic struct {
 	IconCustomEmojiID string `json:"icon_custom_emoji_id,omitempty"`
 }
 
+// Gift object represents a gift that can be sent by the bot.
+type Gift struct {
+	// ID is an unique identifier of the gift
+	ID string `json:"id"`
+	// Sticker is the sticker that represents the gift
+	Sticker Sticker `json:"sticker"`
+	// StarCount is the number of Telegram Stars that
+	// must be paid to send the sticker
+	StarCount int `json:"star_count"`
+	// UpgradeStarCount is the number of Telegram Stars that
+	// must be paid to upgrade the gift to a unique one
+	//
+	// optional
+	UpgradeStarCount int `json:"upgrade_star_count,omitempty"`
+	// TotalCount is the total number of the gifts of this type that
+	// can be sent; for limited gifts only
+	//
+	// optional
+	TotalCount int `json:"total_count,omitempty"`
+	// RemainingCount is the number of remaining gifts of this type that
+	// can be sent; for limited gifts only
+	//
+	// optional
+	RemainingCount int `json:"remaining_count,omitempty"`
+}
+
+// Gifts object represents a list of gifts.
+type Gifts struct {
+	// Gifts is the list of gifts
+	Gifts []Gift `json:"gifts"`
+}
+
 // BotCommand represents a bot command.
 type BotCommand struct {
 	// Command text of the command, 1-32 characters.
@@ -3991,6 +4023,29 @@ type InlineQuery struct {
 	//
 	// optional
 	Location *Location `json:"location,omitempty"`
+}
+
+// InlineQueryResults defines a type constraint interface that includes all valid
+// inline query result types supported by the Telegram Bot API. This interface
+// allows methods to accept any of these result types, enabling strict type checking
+// and ensuring only supported inline query results are used.
+type InlineQueryResults interface {
+	InlineQueryResultCachedAudio |
+		InlineQueryResultCachedDocument |
+		InlineQueryResultCachedPhoto |
+		InlineQueryResultCachedSticker |
+		InlineQueryResultCachedVideo |
+		InlineQueryResultCachedVoice |
+		InlineQueryResultArticle |
+		InlineQueryResultAudio |
+		InlineQueryResultContact |
+		InlineQueryResultGame |
+		InlineQueryResultDocument |
+		InlineQueryResultLocation |
+		InlineQueryResultPhoto |
+		InlineQueryResultVenue |
+		InlineQueryResultVideo |
+		InlineQueryResultVoice
 }
 
 // InlineQueryResultCachedAudio is an inline query response with cached audio.
@@ -4862,6 +4917,15 @@ type SentWebAppMessage struct {
 	InlineMessageID string `json:"inline_message_id,omitempty"`
 }
 
+// PreparedInlineMessage describes an inline message to be sent by a user of a Mini App.
+type PreparedInlineMessage struct {
+	// ID is an unique identifier of the prepared message
+	ID string `json:"id"`
+	// ExpirationDate of the prepared message, in Unix time.
+	// Expired prepared messages can no longer be used
+	ExpirationDate int64 `json:"expiration_date"`
+}
+
 // InputTextMessageContent contains text for displaying
 // as an inline query result.
 type InputTextMessageContent struct {
@@ -5138,6 +5202,19 @@ type SuccessfulPayment struct {
 	TotalAmount int `json:"total_amount"`
 	// InvoicePayload bot specified invoice payload
 	InvoicePayload string `json:"invoice_payload"`
+	// SubscriptionExpirationDate is an expiration date of the subscription,
+	// in Unix time; for recurring payments only
+	//
+	// optional
+	SubscriptionExpirationDate int64 `json:"subscription_expiration_date,omitempty"`
+	// IsRecurring is True, if the payment is a recurring payment for a subscription
+	//
+	// optional
+	IsRecurring bool `json:"is_recurring,omitempty"`
+	// IsFirstRecurring is True, if the payment is the first payment for a subscription
+	//
+	// optional
+	IsFirstRecurring bool `json:"is_first_recurring,omitempty"`
 	// ShippingOptionID identifier of the shipping option chosen by the user
 	//
 	// optional
@@ -5266,12 +5343,24 @@ type TransactionPartner struct {
 	//
 	// optional
 	InvoicePayload string `json:"invoice_payload,omitempty"`
+	// SubscriptionPeriod is the duration of the paid subscription.
+	// Can be available only for “invoice_payment” transactions.
+	// Represent only in "user" state
+	//
+	// optional
+	SubscriptionPeriod int64 `json:"subscription_period,omitempty"`
 	// PaidMedia is the nformation about the paid media
 	// bought by the user
 	// Represent only in "user" state
 	//
 	// optional
 	PaidMedia []PaidMedia `json:"paid_media,omitempty"`
+	// Gift is the gift sent to the user by the bot;
+	// for “gift_purchase” transactions only
+	// Represent only in "user" state
+	//
+	// optional
+	Gift *Gift `json:"gift,omitempty"`
 	// RequestCount is the number of successful requests that
 	// exceeded regular limits and were therefore billed
 	// Represent only in "telegram_api" state

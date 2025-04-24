@@ -1331,6 +1331,30 @@ func (config UserProfilePhotosConfig) params() (Params, error) {
 	return params, nil
 }
 
+// SetUserEmojiStatusConfig changes the emoji status for a given user that
+// previously allowed the bot to manage their emoji status via
+// the Mini App method requestEmojiStatusAccess.
+// Returns True on success.
+type SetUserEmojiStatusConfig struct {
+	UserID                    int64 // required
+	EmojiStatusCustomEmojiID  string
+	EmojiStatusExpirationDate int64
+}
+
+func (SetUserEmojiStatusConfig) method() string {
+	return "setUserEmojiStatus"
+}
+
+func (config SetUserEmojiStatusConfig) params() (Params, error) {
+	params := make(Params)
+
+	params.AddNonZero64("user_id", config.UserID)
+	params.AddNonEmpty("emoji_status_custom_emoji_id", config.EmojiStatusCustomEmojiID)
+	params.AddNonZero64("emoji_status_expiration_date	", config.EmojiStatusExpirationDate)
+
+	return params, nil
+}
+
 // FileConfig has information about a file hosted on Telegram.
 type FileConfig struct {
 	FileID string
@@ -1493,6 +1517,38 @@ func (config AnswerWebAppQueryConfig) params() (Params, error) {
 
 	params["web_app_query_id"] = config.WebAppQueryID
 	err := params.AddInterface("result", config.Result)
+
+	return params, err
+}
+
+// SavePreparedInlineMessageConfig stores a message that can be sent by a user of a Mini App.
+// Returns a PreparedInlineMessage object.
+type SavePreparedInlineMessageConfig[T InlineQueryResults] struct {
+	UserID            int64 // required
+	Result            T     // required
+	AllowUserChats    bool
+	AllowBotChats     bool
+	AllowGroupChats   bool
+	AllowChannelChats bool
+}
+
+func (config SavePreparedInlineMessageConfig[T]) method() string {
+	return "savePreparedInlineMessage"
+}
+
+func (config SavePreparedInlineMessageConfig[T]) params() (Params, error) {
+	params := make(Params)
+
+	params.AddNonZero64("user_id", config.UserID)
+	err := params.AddInterface("result", config.Result)
+	if err != nil {
+		return params, err
+	}
+
+	params.AddBool("allow_user_chats", config.AllowUserChats)
+	params.AddBool("allow_bot_chats", config.AllowBotChats)
+	params.AddBool("allow_group_chats", config.AllowGroupChats)
+	params.AddBool("allow_channel_chats", config.AllowChannelChats)
 
 	return params, err
 }
@@ -2082,12 +2138,14 @@ func (config InvoiceConfig) method() string {
 
 // InvoiceLinkConfig contains information for createInvoiceLink method
 type InvoiceLinkConfig struct {
+	BusinessConnectionID      BusinessConnectionID
 	Title                     string         // Required
 	Description               string         // Required
 	Payload                   string         // Required
 	ProviderToken             string         // Required
 	Currency                  string         // Required
 	Prices                    []LabeledPrice // Required
+	SubscriptionPeriod        int
 	MaxTipAmount              int
 	SuggestedTipAmounts       []int
 	ProviderData              string
@@ -2105,7 +2163,10 @@ type InvoiceLinkConfig struct {
 }
 
 func (config InvoiceLinkConfig) params() (Params, error) {
-	params := make(Params)
+	params, err := config.BusinessConnectionID.params()
+	if err != nil {
+		return params, err
+	}
 
 	params["title"] = config.Title
 	params["description"] = config.Description
@@ -2115,9 +2176,13 @@ func (config InvoiceLinkConfig) params() (Params, error) {
 		return params, err
 	}
 
+	params.AddNonZero("subscription_period", config.SubscriptionPeriod)
 	params.AddNonEmpty("provider_token", config.ProviderToken)
 	params.AddNonZero("max_tip_amount", config.MaxTipAmount)
-	err := params.AddInterface("suggested_tip_amounts", config.SuggestedTipAmounts)
+	err = params.AddInterface("suggested_tip_amounts", config.SuggestedTipAmounts)
+	if err != nil {
+		return params, err
+	}
 	params.AddNonEmpty("provider_data", config.ProviderData)
 	params.AddNonEmpty("photo_url", config.PhotoURL)
 	params.AddNonZero("photo_size", config.PhotoSize)
@@ -2223,6 +2288,28 @@ func (config RefundStarPaymentConfig) params() (Params, error) {
 	return params, nil
 }
 
+// EditUserStarSubscriptionConfig allows the bot to cancel or re-enable extension
+// of a subscription paid in Telegram Stars. Returns True on success.
+type EditUserStarSubscriptionConfig struct {
+	UserID                  int64  // required
+	TelegramPaymentChargeID string // required
+	IsCanceled              bool   // required
+}
+
+func (config EditUserStarSubscriptionConfig) method() string {
+	return "editUserStarSubscription"
+}
+
+func (config EditUserStarSubscriptionConfig) params() (Params, error) {
+	params := make(Params)
+
+	params["telegram_payment_charge_id"] = config.TelegramPaymentChargeID
+	params.AddNonZero64("user_id", config.UserID)
+	params.AddBool("is_canceled", config.IsCanceled)
+
+	return params, nil
+}
+
 // DeleteMessageConfig contains information of a message in a chat to delete.
 type DeleteMessageConfig struct {
 	BaseChatMessage
@@ -2247,6 +2334,54 @@ func (config DeleteMessagesConfig) method() string {
 
 func (config DeleteMessagesConfig) params() (Params, error) {
 	return config.BaseChatMessages.params()
+}
+
+// GetAvailableGiftsConfig returns the list of gifts that can be sent by the bot
+// to users and channel chats. Requires no parameters. Returns a Gifts object.
+type GetAvailableGiftsConfig struct{}
+
+func (config GetAvailableGiftsConfig) method() string {
+	return "getAvailableGifts"
+}
+
+func (config GetAvailableGiftsConfig) params() (Params, error) {
+	return nil, nil
+}
+
+// SendGiftConfig sends a gift to the given user or channel chat.
+// The gift can't be converted to Telegram Stars by the receiver.
+// Returns True on success.
+type SendGiftConfig struct {
+	UserID        int64
+	Chat          ChatConfig
+	GiftID        string // required
+	PayForUpgrade bool
+	Text          string
+	TextParseMode string
+	TextEntities  []MessageEntity
+}
+
+func (config SendGiftConfig) method() string {
+	return "sendGift"
+}
+
+func (config SendGiftConfig) params() (Params, error) {
+	params := make(Params)
+	params.AddNonZero64("user_id", config.UserID)
+
+	p1, err := config.Chat.params()
+	if err != nil {
+		return params, err
+	}
+	params.Merge(p1)
+
+	params.AddNonEmpty("gift_id", config.GiftID)
+	params.AddBool("pay_for_upgrade", config.PayForUpgrade)
+	params.AddNonEmpty("text", config.Text)
+	params.AddNonEmpty("text_parse_mode", config.Text)
+	params.AddInterface("text_entities", config.TextEntities)
+
+	return params, nil
 }
 
 // PinChatMessageConfig contains information of a message in a chat to pin.
