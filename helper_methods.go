@@ -345,6 +345,17 @@ func NewUserProfilePhotos(userID int64) UserProfilePhotosConfig {
 	}
 }
 
+// NewSetUserEmojiStatus changes the user's emoji status.
+//
+// userID is the ID of the user you wish to get profile photos from.
+func NewSetUserEmojiStatus(userID int64, emojiID string, statusExpDate int64) SetUserEmojiStatusConfig {
+	return SetUserEmojiStatusConfig{
+		UserID:                    userID,
+		EmojiStatusCustomEmojiID:  emojiID,
+		EmojiStatusExpirationDate: statusExpDate,
+	}
+}
+
 // NewUpdate gets updates since the last Offset.
 //
 // offset is the last Update ID to include.
