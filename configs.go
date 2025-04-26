@@ -2114,7 +2114,12 @@ func (config InvoiceConfig) params() (Params, error) {
 
 	params.AddNonEmpty("provider_token", config.ProviderToken)
 	params.AddNonZero("max_tip_amount", config.MaxTipAmount)
-	err = params.AddInterface("suggested_tip_amounts", config.SuggestedTipAmounts)
+	if len(config.SuggestedTipAmounts) > 0 {
+		err = params.AddInterface("suggested_tip_amounts", config.SuggestedTipAmounts)
+		if err != nil {
+			return params, err
+		}
+	}
 	params.AddNonEmpty("start_parameter", config.StartParameter)
 	params.AddNonEmpty("provider_data", config.ProviderData)
 	params.AddNonEmpty("photo_url", config.PhotoURL)
