@@ -1227,37 +1227,15 @@ func (config EditMessageMediaConfig) params() (Params, error) {
 		return params, err
 	}
 
-	if config.Media.getMedia().NeedsUpload() {
-		config.Media.setUploadMedia(fmt.Sprintf("attach://file-%d", 0))
-	}
+	preparedMedia := prepareInputMediaForParams([]InputMedia{config.Media})
 
-	if thumb := config.Media.getThumb(); thumb != nil && thumb.NeedsUpload() {
-		config.Media.setUploadThumb(fmt.Sprintf("attach://file-%d-thumb", 0))
-	}
-
-	err = params.AddInterface("media", config.Media)
+	err = params.AddInterface("media", preparedMedia[0])
 
 	return params, err
 }
 
 func (config EditMessageMediaConfig) files() []RequestFile {
-	files := []RequestFile{}
-
-	if config.Media.getMedia().NeedsUpload() {
-		files = append(files, RequestFile{
-			Name: "file-0",
-			Data: config.Media.getMedia(),
-		})
-	}
-
-	if thumb := config.Media.getThumb(); thumb != nil && thumb.NeedsUpload() {
-		files = append(files, RequestFile{
-			Name: "file-0-thumb",
-			Data: thumb,
-		})
-	}
-
-	return files
+	return prepareInputMediaForFiles([]InputMedia{config.Media})
 }
 
 // EditMessageReplyMarkupConfig allows you to modify the reply markup
