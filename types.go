@@ -5316,28 +5316,70 @@ type RevenueWithdrawalState struct {
 	URL string `json:"url,omitempty"`
 }
 
+// AffiliateInfo contains information about the affiliate that
+// received a commission via this transaction.
+type AffiliateInfo struct {
+	// AffiliateUser is the bot or the user that received an 
+	// affiliate commission if it was received by a bot or a user
+	//
+	// optional
+	AffiliateUser *User `json:"affiliate_user,omitempty"`
+	// AffiliateChat is the chat that received an affiliate commission 
+	// if it was received by a chat
+	//
+	// optional
+	AffiliateChat *Chat `json:"affiliate_chat,omitempty"`
+	// CommissionPerMile is the number of Telegram Stars received by 
+	// the affiliate for each 1000 Telegram Stars received by 
+	// the bot from referred users
+	CommissionPerMile int `json:"commission_per_mille"`
+	// Amount is the integer amount of Telegram Stars received by 
+	// the affiliate from the transaction, rounded to 0; 
+	// can be negative for refunds
+	Amount int64 `json:"amount"`
+	// NanostarAmount is the number of 1/1000000000 shares of Telegram Stars 
+	// received by the affiliate; from -999999999 to 999999999; 
+	// can be negative for refunds
+	//
+	// optional
+	NanostarAmount int64 `json:"nanostar_amount,omitempty"`
+}
+
 // TransactionPartner describes the source of a transaction, or its recipient for outgoing transactions. Currently, it can be one of
 //   - TransactionPartnerUser
+//   - TransactionPartnerAffiliateProgram
 //   - TransactionPartnerFragment
 //   - TransactionPartnerTelegramAds
 //   - TransactionPartnerTelegramApi
 //   - TransactionPartnerOther
 type TransactionPartner struct {
 	// Type of the transaction partner. Must be one of:
-	//	- fragment
 	//	- user
-	//  - other
+	//  - affiliate_program
+	//	- fragment
 	//  - telegram_ads
 	//	- telegram_api
+	//  - other
 	Type string `json:"type"`
-	// State of the transaction if the transaction is outgoing.
-	// Represent only in "fragment" state
+	// TransactionPartnerUser payload for "user" type of transaction partner
+	TransactionPartnerUser
+	// TransactionPartnerAffiliateProgram payload for "affiliate_program" type of transaction partner
+	TransactionPartnerAffiliateProgram
+	// TransactionPartnerFragment payload for "fragment" type of transaction partner
+	TransactionPartnerFragment
+	// TransactionPartnerTelegramAPI payload for "telegram_api" type of transaction partner
+	TransactionPartnerTelegramAPI
+}
+
+type TransactionPartnerUser struct {
+	// Information about the user.
+	User User `json:"user"`
+	// Affiliate is the information about the affiliate that
+	// received a commission via this transaction.
+	// Can be available only for “invoice_payment” and “paid_media_payment” transactions.
 	//
 	// optional
-	WithdrawalState *RevenueWithdrawalState `json:"withdrawal_state,omitempty"`
-	// Information about the user.
-	// Represent only in "user" state
-	User *User `json:"user,omitempty"`
+	Affiliate *AffiliateInfo `json:"affiliate,omitempty"`
 	// TransactionPartnerUser only.
 	// Bot-specified invoice payload
 	//
@@ -5361,12 +5403,35 @@ type TransactionPartner struct {
 	//
 	// optional
 	Gift *Gift `json:"gift,omitempty"`
-	// RequestCount is the number of successful requests that
-	// exceeded regular limits and were therefore billed
-	// Represent only in "telegram_api" state
+}
+
+// TransactionPartnerAffiliateProgram describes the affiliate program that
+// issued the affiliate commission received via this transaction.
+type TransactionPartnerAffiliateProgram struct {
+	// SponsorUser is the information about the bot that
+	// sponsored the affiliate program
 	//
 	// optional
-	RequestCount int `json:"request_count,omitempty"`
+	SponsorUser *User `json:"sponsor_user,omitempty"`
+	// CommissionPerMile is the number of Telegram Stars received by the bot
+	// for each 1000 Telegram Stars received by
+	// the affiliate program sponsor from referred users
+	CommissionPerMile int `json:"commission_per_mille"`
+}
+
+// TransactionPartnerFragment describes a withdrawal transaction with Fragment.
+type TransactionPartnerFragment struct {
+	// State of the transaction if the transaction is outgoing.
+	//
+	// optional
+	WithdrawalState *RevenueWithdrawalState `json:"withdrawal_state,omitempty"`
+}
+
+// TransactionPartnerTelegramAPI describes a transaction with payment for paid broadcasting.
+type TransactionPartnerTelegramAPI struct {
+	// RequestCount is the number of successful requests that
+	// exceeded regular limits and were therefore billed
+	RequestCount int `json:"request_count"`
 }
 
 // StarTransaction describes a Telegram Star transaction.
@@ -5377,6 +5442,12 @@ type StarTransaction struct {
 	ID string `json:"id"`
 	// Number of Telegram Stars transferred by the transaction
 	Amount int64 `json:"amount"`
+	// NanostarAmount is the number of 1/1000000000 shares of
+	// Telegram Stars transferred by the transaction;
+	// from 0 to 999999999
+	//
+	// optional
+	NanostarAmount int64 `json:"nanostar_amount,omitempty"`
 	// Date the transaction was created in Unix time
 	Date int64 `json:"date"`
 	// Source of an incoming transaction (e.g., a user purchasing goods or services, Fragment refunding a failed withdrawal).
