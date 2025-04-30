@@ -4370,6 +4370,7 @@ type InlineQueryResultArticle struct {
 	// HideURL pass True, if you don't want the URL to be shown in the message.
 	//
 	// optional
+	// Deprecated in 8.2: Pass an empty string as url instead.
 	HideURL bool `json:"hide_url,omitempty"`
 	// Description short description of the result.
 	//
@@ -5319,26 +5320,26 @@ type RevenueWithdrawalState struct {
 // AffiliateInfo contains information about the affiliate that
 // received a commission via this transaction.
 type AffiliateInfo struct {
-	// AffiliateUser is the bot or the user that received an 
+	// AffiliateUser is the bot or the user that received an
 	// affiliate commission if it was received by a bot or a user
 	//
 	// optional
 	AffiliateUser *User `json:"affiliate_user,omitempty"`
-	// AffiliateChat is the chat that received an affiliate commission 
+	// AffiliateChat is the chat that received an affiliate commission
 	// if it was received by a chat
 	//
 	// optional
 	AffiliateChat *Chat `json:"affiliate_chat,omitempty"`
-	// CommissionPerMile is the number of Telegram Stars received by 
-	// the affiliate for each 1000 Telegram Stars received by 
+	// CommissionPerMile is the number of Telegram Stars received by
+	// the affiliate for each 1000 Telegram Stars received by
 	// the bot from referred users
 	CommissionPerMile int `json:"commission_per_mille"`
-	// Amount is the integer amount of Telegram Stars received by 
-	// the affiliate from the transaction, rounded to 0; 
+	// Amount is the integer amount of Telegram Stars received by
+	// the affiliate from the transaction, rounded to 0;
 	// can be negative for refunds
 	Amount int64 `json:"amount"`
-	// NanostarAmount is the number of 1/1000000000 shares of Telegram Stars 
-	// received by the affiliate; from -999999999 to 999999999; 
+	// NanostarAmount is the number of 1/1000000000 shares of Telegram Stars
+	// received by the affiliate; from -999999999 to 999999999;
 	// can be negative for refunds
 	//
 	// optional

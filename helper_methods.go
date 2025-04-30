@@ -53,6 +53,40 @@ func NewDeleteMessages(chatID int64, messageIDs []int) DeleteMessagesConfig {
 	}
 }
 
+// NewVerifyUser verifies user on behalf of the organization
+// which is represented by the bot
+func NewVerifyUser(userID int64, customDescription string) VerifyUserConfig {
+	return VerifyUserConfig{
+		UserID:            userID,
+		CustomDescription: customDescription,
+	}
+}
+
+// NewVerifyChat verifies chat on behalf of the organization
+// which is represented by the bot
+func NewVerifyChat(chat ChatConfig, customDescription string) VerifyChatConfig {
+	return VerifyChatConfig{
+		Chat:              chat,
+		CustomDescription: customDescription,
+	}
+}
+
+// NewRemoveUserVerification removes verification from a user who is currently 
+// verified on behalf of the organization represented by the bot.
+func NewRemoveUserVerification(userID int64) RemoveUserVerificationConfig {
+	return RemoveUserVerificationConfig{
+		UserID:            userID,
+	}
+}
+
+// NewRemoveChatVerification removes verification from a chat that is currently
+//  verified on behalf of the organization represented by the bot.
+func NewRemoveChatVerification(chat ChatConfig) RemoveChatVerificationConfig {
+	return RemoveChatVerificationConfig{
+		Chat:              chat,
+	}
+}
+
 // NewMessageToChannel creates a new Message that is sent to a channel
 // by username.
 //

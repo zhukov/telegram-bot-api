@@ -2369,6 +2369,81 @@ func (config SendGiftConfig) params() (Params, error) {
 	return params, nil
 }
 
+// VerifyUserConfig verifies a user on behalf of the organization
+// which is represented by the bot.
+// Returns True on success.
+type VerifyUserConfig struct {
+	UserID            int64 // required
+	CustomDescription string
+}
+
+func (config VerifyUserConfig) method() string {
+	return "verifyUser"
+}
+
+func (config VerifyUserConfig) params() (Params, error) {
+	params := make(Params)
+	params.AddNonZero64("user_id", config.UserID)
+	params.AddNonEmpty("custom_description", config.CustomDescription)
+
+	return params, nil
+}
+
+// VerifyChatConfig verifies a chat on behalf of the organization
+// which is represented by the bot.
+// Returns True on success.
+type VerifyChatConfig struct {
+	Chat              ChatConfig
+	CustomDescription string
+}
+
+func (config VerifyChatConfig) method() string {
+	return "verifyChat"
+}
+
+func (config VerifyChatConfig) params() (Params, error) {
+	params, err := config.Chat.params()
+	if err != nil {
+		return params, err
+	}
+	params.AddNonEmpty("custom_description", config.CustomDescription)
+
+	return params, nil
+}
+
+// RemoveUserVerificationConfig removes verification from a user who is currently
+// verified on behalf of the organization represented by the bot.
+// Returns True on success.
+type RemoveUserVerificationConfig struct {
+	UserID int64 // required
+}
+
+func (config RemoveUserVerificationConfig) method() string {
+	return "removeUserVerification"
+}
+
+func (config RemoveUserVerificationConfig) params() (Params, error) {
+	params := make(Params)
+	params.AddNonZero64("user_id", config.UserID)
+
+	return params, nil
+}
+
+// RemoveChatVerificationConfig removes verification from a chat who is currently
+// verified on behalf of the organization represented by the bot.
+// Returns True on success.
+type RemoveChatVerificationConfig struct {
+	Chat ChatConfig
+}
+
+func (config RemoveChatVerificationConfig) method() string {
+	return "removeChatVerification"
+}
+
+func (config RemoveChatVerificationConfig) params() (Params, error) {
+	return config.Chat.params()
+}
+
 // PinChatMessageConfig contains information of a message in a chat to pin.
 type PinChatMessageConfig struct {
 	BaseChatMessage
