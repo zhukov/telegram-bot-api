@@ -621,7 +621,7 @@ type Message struct {
 	// Quote for replies that quote part of the original message, the quoted part of the message
 	//
 	// optional
-	Quote *TextQuote `json:"text_quote,omitempty"`
+	Quote *TextQuote `json:"quote,omitempty"`
 	// ReplyToStory for replies to a story, the original story
 	//
 	// ReplyToStory
