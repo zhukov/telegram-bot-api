@@ -71,7 +71,7 @@ func NewVerifyChat(chat ChatConfig, customDescription string) VerifyChatConfig {
 	}
 }
 
-// NewRemoveUserVerification removes verification from a user who is currently 
+// NewRemoveUserVerification removes verification from a user who is currently
 // verified on behalf of the organization represented by the bot.
 func NewRemoveUserVerification(userID int64) RemoveUserVerificationConfig {
 	return RemoveUserVerificationConfig{
@@ -1334,5 +1334,26 @@ func NewInputPaidMediaVideo(media *InputMediaVideo) InputPaidMedia {
 	return InputPaidMedia{
 		Type:  "video",
 		Media: media,
+	}
+}
+
+// NewCreateForumTopicConfig creates a topic in a forum supergroup chat.
+func NewCreateForumTopicConfig(chatID int64, topicName string) CreateForumTopicConfig {
+	return CreateForumTopicConfig{
+		ChatConfig: ChatConfig{
+			ChatID: chatID,
+		},
+		Name: topicName,
+	}
+}
+
+// NewEditForumTopicConfig edit name and icon of a topic in a forum supergroup chat.
+func NewEditForumTopicConfig(chatID, threadID int64, topicName string) EditForumTopicConfig {
+	return EditForumTopicConfig{
+		BaseForum: BaseForum{
+			ChatConfig:      ChatConfig{ChatID: chatID},
+			MessageThreadID: int(threadID),
+		},
+		Name: topicName,
 	}
 }
