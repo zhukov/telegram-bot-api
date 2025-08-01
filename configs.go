@@ -330,8 +330,9 @@ func (config MessageConfig) method() string {
 // ForwardConfig contains information about a ForwardMessage request.
 type ForwardConfig struct {
 	BaseChat
-	FromChat  ChatConfig
-	MessageID int // required
+	FromChat            ChatConfig
+	MessageID           int // required
+	VideoStartTimestamp int64
 }
 
 func (config ForwardConfig) params() (Params, error) {
@@ -345,6 +346,7 @@ func (config ForwardConfig) params() (Params, error) {
 	}
 	params.Merge(p1)
 	params.AddNonZero("message_id", config.MessageID)
+	params.AddNonZero64("video_start_timestamp", config.VideoStartTimestamp)
 
 	return params, nil
 }
@@ -386,6 +388,7 @@ type CopyMessageConfig struct {
 	BaseChat
 	FromChat              ChatConfig
 	MessageID             int
+	VideoStartTimestamp   int64
 	Caption               string
 	ParseMode             string
 	CaptionEntities       []MessageEntity
@@ -404,6 +407,7 @@ func (config CopyMessageConfig) params() (Params, error) {
 	}
 	params.Merge(p1)
 	params.AddNonZero("message_id", config.MessageID)
+	params.AddNonZero64("video_start_timestamp", config.VideoStartTimestamp)
 	params.AddNonEmpty("caption", config.Caption)
 	params.AddNonEmpty("parse_mode", config.ParseMode)
 	params.AddBool("show_caption_above_media", config.ShowCaptionAboveMedia)
@@ -597,7 +601,7 @@ func (config DocumentConfig) files() []RequestFile {
 
 // StickerConfig contains information about a SendSticker request.
 type StickerConfig struct {
-	//Emoji associated with the sticker; only for just uploaded stickers
+	// Emoji associated with the sticker; only for just uploaded stickers
 	Emoji string
 	BaseFile
 }
@@ -628,6 +632,8 @@ type VideoConfig struct {
 	BaseSpoiler
 	Thumb                 RequestFileData
 	Duration              int
+	Cover                 RequestFileData
+	StartTimestamp        int64
 	Caption               string
 	ParseMode             string
 	CaptionEntities       []MessageEntity
@@ -642,6 +648,7 @@ func (config VideoConfig) params() (Params, error) {
 	}
 
 	params.AddNonZero("duration", config.Duration)
+	params.AddNonZero64("start_timestamp", config.StartTimestamp)
 	params.AddNonEmpty("caption", config.Caption)
 	params.AddNonEmpty("parse_mode", config.ParseMode)
 	params.AddBool("supports_streaming", config.SupportsStreaming)
@@ -677,6 +684,12 @@ func (config VideoConfig) files() []RequestFile {
 		})
 	}
 
+	if config.Cover != nil {
+		files = append(files, RequestFile{
+			Name: "cover",
+			Data: config.Cover,
+		})
+	}
 	return files
 }
 
@@ -777,8 +790,7 @@ func (config VideoNoteConfig) files() []RequestFile {
 type PaidMediaConfig struct {
 	BaseChat
 	StarCount             int64
-	Media                 []InputPaidMedia
-	Payload               string          // optional
+	Media                 *InputPaidMedia
 	Caption               string          // optional
 	ParseMode             string          // optional
 	CaptionEntities       []MessageEntity // optional
@@ -792,12 +804,13 @@ func (config PaidMediaConfig) params() (Params, error) {
 	}
 
 	params.AddNonZero64("star_count", config.StarCount)
-	params.AddNonEmpty("payload", config.Payload)
 	params.AddNonEmpty("caption", config.Caption)
 	params.AddNonEmpty("parse_mode", config.ParseMode)
 	params.AddBool("show_caption_above_media", config.ShowCaptionAboveMedia)
 
-	err = params.AddInterface("media", config.Media)
+	media := []InputMedia{config.Media}
+	newMedia := prepareInputMediaForParams(media)
+	err = params.AddInterface("media", newMedia[0])
 	if err != nil {
 		return params, err
 	}
@@ -807,17 +820,19 @@ func (config PaidMediaConfig) params() (Params, error) {
 
 func (config PaidMediaConfig) files() []RequestFile {
 	files := []RequestFile{}
-	for i, v := range config.Media {
+
+	if config.Media.getMedia().NeedsUpload() {
 		files = append(files, RequestFile{
-			Name: fmt.Sprintf("%s-%d", v.Type, i),
-			Data: v.Media,
+			Name: "file-0",
+			Data: config.Media.getMedia(),
 		})
-		if v.Thumb != nil {
-			files = append(files, RequestFile{
-				Name: fmt.Sprintf("thumbnail-%d", i),
-				Data: v.Thumb,
-			})
-		}
+	}
+
+	if thumb := config.Media.getThumb(); thumb != nil && thumb.NeedsUpload() {
+		files = append(files, RequestFile{
+			Name: "file-0-thumb",
+			Data: thumb,
+		})
 	}
 
 	return files
@@ -904,7 +919,7 @@ type EditMessageLiveLocationConfig struct {
 	BaseEdit
 	Latitude             float64 // required
 	Longitude            float64 // required
-	LivePeriod           int     //optional
+	LivePeriod           int     // optional
 	HorizontalAccuracy   float64 // optional
 	Heading              int     // optional
 	ProximityAlertRadius int     // optional
@@ -1212,7 +1227,7 @@ func (config EditMessageCaptionConfig) method() string {
 type EditMessageMediaConfig struct {
 	BaseEdit
 
-	Media interface{}
+	Media InputMedia
 }
 
 func (EditMessageMediaConfig) method() string {
@@ -1225,13 +1240,15 @@ func (config EditMessageMediaConfig) params() (Params, error) {
 		return params, err
 	}
 
-	err = params.AddInterface("media", prepareInputMediaParam(config.Media, 0))
+	preparedMedia := prepareInputMediaForParams([]InputMedia{config.Media})
+
+	err = params.AddInterface("media", preparedMedia[0])
 
 	return params, err
 }
 
 func (config EditMessageMediaConfig) files() []RequestFile {
-	return prepareInputMediaFile(config.Media, 0)
+	return prepareInputMediaForFiles([]InputMedia{config.Media})
 }
 
 // EditMessageReplyMarkupConfig allows you to modify the reply markup
@@ -1301,6 +1318,30 @@ func (config UserProfilePhotosConfig) params() (Params, error) {
 	params.AddNonZero64("user_id", config.UserID)
 	params.AddNonZero("offset", config.Offset)
 	params.AddNonZero("limit", config.Limit)
+
+	return params, nil
+}
+
+// SetUserEmojiStatusConfig changes the emoji status for a given user that
+// previously allowed the bot to manage their emoji status via
+// the Mini App method requestEmojiStatusAccess.
+// Returns True on success.
+type SetUserEmojiStatusConfig struct {
+	UserID                    int64 // required
+	EmojiStatusCustomEmojiID  string
+	EmojiStatusExpirationDate int64
+}
+
+func (SetUserEmojiStatusConfig) method() string {
+	return "setUserEmojiStatus"
+}
+
+func (config SetUserEmojiStatusConfig) params() (Params, error) {
+	params := make(Params)
+
+	params.AddNonZero64("user_id", config.UserID)
+	params.AddNonEmpty("emoji_status_custom_emoji_id", config.EmojiStatusCustomEmojiID)
+	params.AddNonZero64("emoji_status_expiration_date	", config.EmojiStatusExpirationDate)
 
 	return params, nil
 }
@@ -1406,7 +1447,7 @@ func (config DeleteWebhookConfig) params() (Params, error) {
 
 // InlineQueryResultsButton represents a button to be shown above inline query results. You must use exactly one of the optional fields.
 type InlineQueryResultsButton struct {
-	//Label text on the button
+	// Label text on the button
 	Text string `json:"text"`
 	//Description of the Web App that will be launched when the user presses the button. The Web App will be able to switch back to the inline mode using the method switchInlineQuery inside the Web App.
 	//
@@ -1467,6 +1508,38 @@ func (config AnswerWebAppQueryConfig) params() (Params, error) {
 
 	params["web_app_query_id"] = config.WebAppQueryID
 	err := params.AddInterface("result", config.Result)
+
+	return params, err
+}
+
+// SavePreparedInlineMessageConfig stores a message that can be sent by a user of a Mini App.
+// Returns a PreparedInlineMessage object.
+type SavePreparedInlineMessageConfig[T InlineQueryResults] struct {
+	UserID            int64 // required
+	Result            T     // required
+	AllowUserChats    bool
+	AllowBotChats     bool
+	AllowGroupChats   bool
+	AllowChannelChats bool
+}
+
+func (config SavePreparedInlineMessageConfig[T]) method() string {
+	return "savePreparedInlineMessage"
+}
+
+func (config SavePreparedInlineMessageConfig[T]) params() (Params, error) {
+	params := make(Params)
+
+	params.AddNonZero64("user_id", config.UserID)
+	err := params.AddInterface("result", config.Result)
+	if err != nil {
+		return params, err
+	}
+
+	params.AddBool("allow_user_chats", config.AllowUserChats)
+	params.AddBool("allow_bot_chats", config.AllowBotChats)
+	params.AddBool("allow_group_chats", config.AllowGroupChats)
+	params.AddBool("allow_channel_chats", config.AllowChannelChats)
 
 	return params, err
 }
@@ -2032,7 +2105,12 @@ func (config InvoiceConfig) params() (Params, error) {
 
 	params.AddNonEmpty("provider_token", config.ProviderToken)
 	params.AddNonZero("max_tip_amount", config.MaxTipAmount)
-	err = params.AddInterface("suggested_tip_amounts", config.SuggestedTipAmounts)
+	if len(config.SuggestedTipAmounts) > 0 {
+		err = params.AddInterface("suggested_tip_amounts", config.SuggestedTipAmounts)
+		if err != nil {
+			return params, err
+		}
+	}
 	params.AddNonEmpty("start_parameter", config.StartParameter)
 	params.AddNonEmpty("provider_data", config.ProviderData)
 	params.AddNonEmpty("photo_url", config.PhotoURL)
@@ -2056,12 +2134,14 @@ func (config InvoiceConfig) method() string {
 
 // InvoiceLinkConfig contains information for createInvoiceLink method
 type InvoiceLinkConfig struct {
-	Title                     string         //Required
-	Description               string         //Required
-	Payload                   string         //Required
-	ProviderToken             string         //Required
-	Currency                  string         //Required
-	Prices                    []LabeledPrice //Required
+	BusinessConnectionID      BusinessConnectionID
+	Title                     string         // Required
+	Description               string         // Required
+	Payload                   string         // Required
+	ProviderToken             string         // Required
+	Currency                  string         // Required
+	Prices                    []LabeledPrice // Required
+	SubscriptionPeriod        int
 	MaxTipAmount              int
 	SuggestedTipAmounts       []int
 	ProviderData              string
@@ -2079,7 +2159,10 @@ type InvoiceLinkConfig struct {
 }
 
 func (config InvoiceLinkConfig) params() (Params, error) {
-	params := make(Params)
+	params, err := config.BusinessConnectionID.params()
+	if err != nil {
+		return params, err
+	}
 
 	params["title"] = config.Title
 	params["description"] = config.Description
@@ -2089,9 +2172,15 @@ func (config InvoiceLinkConfig) params() (Params, error) {
 		return params, err
 	}
 
+	params.AddNonZero("subscription_period", config.SubscriptionPeriod)
 	params.AddNonEmpty("provider_token", config.ProviderToken)
 	params.AddNonZero("max_tip_amount", config.MaxTipAmount)
-	err := params.AddInterface("suggested_tip_amounts", config.SuggestedTipAmounts)
+	if len(config.SuggestedTipAmounts) > 0 {
+		err := params.AddInterface("suggested_tip_amounts", config.SuggestedTipAmounts)
+		if err != nil {
+			return params, err
+		}
+	}
 	params.AddNonEmpty("provider_data", config.ProviderData)
 	params.AddNonEmpty("photo_url", config.PhotoURL)
 	params.AddNonZero("photo_size", config.PhotoSize)
@@ -2105,7 +2194,7 @@ func (config InvoiceLinkConfig) params() (Params, error) {
 	params.AddBool("send_email_to_provider", config.SendEmailToProvider)
 	params.AddBool("is_flexible", config.IsFlexible)
 
-	return params, err
+	return params, nil
 }
 
 func (config InvoiceLinkConfig) method() string {
@@ -2180,8 +2269,8 @@ func (config GetStarTransactionsConfig) params() (Params, error) {
 // RefundStarPaymentConfig refunds a successful payment in Telegram Stars.
 // Returns True on success.
 type RefundStarPaymentConfig struct {
-	UserID                  int64  //required
-	TelegramPaymentChargeID string //required
+	UserID                  int64  // required
+	TelegramPaymentChargeID string // required
 }
 
 func (config RefundStarPaymentConfig) method() string {
@@ -2193,6 +2282,28 @@ func (config RefundStarPaymentConfig) params() (Params, error) {
 
 	params["telegram_payment_charge_id"] = config.TelegramPaymentChargeID
 	params.AddNonZero64("user_id", config.UserID)
+
+	return params, nil
+}
+
+// EditUserStarSubscriptionConfig allows the bot to cancel or re-enable extension
+// of a subscription paid in Telegram Stars. Returns True on success.
+type EditUserStarSubscriptionConfig struct {
+	UserID                  int64  // required
+	TelegramPaymentChargeID string // required
+	IsCanceled              bool   // required
+}
+
+func (config EditUserStarSubscriptionConfig) method() string {
+	return "editUserStarSubscription"
+}
+
+func (config EditUserStarSubscriptionConfig) params() (Params, error) {
+	params := make(Params)
+
+	params["telegram_payment_charge_id"] = config.TelegramPaymentChargeID
+	params.AddNonZero64("user_id", config.UserID)
+	params.AddBool("is_canceled", config.IsCanceled)
 
 	return params, nil
 }
@@ -2221,6 +2332,129 @@ func (config DeleteMessagesConfig) method() string {
 
 func (config DeleteMessagesConfig) params() (Params, error) {
 	return config.BaseChatMessages.params()
+}
+
+// GetAvailableGiftsConfig returns the list of gifts that can be sent by the bot
+// to users and channel chats. Requires no parameters. Returns a Gifts object.
+type GetAvailableGiftsConfig struct{}
+
+func (config GetAvailableGiftsConfig) method() string {
+	return "getAvailableGifts"
+}
+
+func (config GetAvailableGiftsConfig) params() (Params, error) {
+	return nil, nil
+}
+
+// SendGiftConfig sends a gift to the given user or channel chat.
+// The gift can't be converted to Telegram Stars by the receiver.
+// Returns True on success.
+type SendGiftConfig struct {
+	UserID        int64
+	Chat          ChatConfig
+	GiftID        string // required
+	PayForUpgrade bool
+	Text          string
+	TextParseMode string
+	TextEntities  []MessageEntity
+}
+
+func (config SendGiftConfig) method() string {
+	return "sendGift"
+}
+
+func (config SendGiftConfig) params() (Params, error) {
+	params := make(Params)
+	params.AddNonZero64("user_id", config.UserID)
+
+	p1, err := config.Chat.params()
+	if err != nil {
+		return params, err
+	}
+	params.Merge(p1)
+
+	params.AddNonEmpty("gift_id", config.GiftID)
+	params.AddBool("pay_for_upgrade", config.PayForUpgrade)
+	params.AddNonEmpty("text", config.Text)
+	params.AddNonEmpty("text_parse_mode", config.Text)
+	params.AddInterface("text_entities", config.TextEntities)
+
+	return params, nil
+}
+
+// VerifyUserConfig verifies a user on behalf of the organization
+// which is represented by the bot.
+// Returns True on success.
+type VerifyUserConfig struct {
+	UserID            int64 // required
+	CustomDescription string
+}
+
+func (config VerifyUserConfig) method() string {
+	return "verifyUser"
+}
+
+func (config VerifyUserConfig) params() (Params, error) {
+	params := make(Params)
+	params.AddNonZero64("user_id", config.UserID)
+	params.AddNonEmpty("custom_description", config.CustomDescription)
+
+	return params, nil
+}
+
+// VerifyChatConfig verifies a chat on behalf of the organization
+// which is represented by the bot.
+// Returns True on success.
+type VerifyChatConfig struct {
+	Chat              ChatConfig
+	CustomDescription string
+}
+
+func (config VerifyChatConfig) method() string {
+	return "verifyChat"
+}
+
+func (config VerifyChatConfig) params() (Params, error) {
+	params, err := config.Chat.params()
+	if err != nil {
+		return params, err
+	}
+	params.AddNonEmpty("custom_description", config.CustomDescription)
+
+	return params, nil
+}
+
+// RemoveUserVerificationConfig removes verification from a user who is currently
+// verified on behalf of the organization represented by the bot.
+// Returns True on success.
+type RemoveUserVerificationConfig struct {
+	UserID int64 // required
+}
+
+func (config RemoveUserVerificationConfig) method() string {
+	return "removeUserVerification"
+}
+
+func (config RemoveUserVerificationConfig) params() (Params, error) {
+	params := make(Params)
+	params.AddNonZero64("user_id", config.UserID)
+
+	return params, nil
+}
+
+// RemoveChatVerificationConfig removes verification from a chat who is currently
+// verified on behalf of the organization represented by the bot.
+// Returns True on success.
+type RemoveChatVerificationConfig struct {
+	Chat ChatConfig
+}
+
+func (config RemoveChatVerificationConfig) method() string {
+	return "removeChatVerification"
+}
+
+func (config RemoveChatVerificationConfig) params() (Params, error) {
+	return config.Chat.params()
 }
 
 // PinChatMessageConfig contains information of a message in a chat to pin.
@@ -2410,7 +2644,7 @@ type NewStickerSetConfig struct {
 	Title           string
 	Stickers        []InputSticker
 	StickerType     string
-	NeedsRepainting bool //optional; Pass True if stickers in the sticker set must be repainted to the color of text when used in messages, the accent color if used as emoji status, white on chat photos, or another appropriate color based on context; for custom emoji sticker sets only
+	NeedsRepainting bool // optional; Pass True if stickers in the sticker set must be repainted to the color of text when used in messages, the accent color if used as emoji status, white on chat photos, or another appropriate color based on context; for custom emoji sticker sets only
 }
 
 func (config NewStickerSetConfig) method() string {
@@ -2892,7 +3126,7 @@ func (config UnpinAllGeneralForumTopicMessagesConfig) method() string {
 // Media consist of InputMedia items (InputMediaPhoto, InputMediaVideo).
 type MediaGroupConfig struct {
 	BaseChat
-	Media []interface{}
+	Media []InputMedia
 }
 
 func (config MediaGroupConfig) method() string {
@@ -2921,7 +3155,7 @@ type DiceConfig struct {
 	// Currently, must be one of 🎲, 🎯, 🏀, ⚽, 🎳, or 🎰.
 	// Dice can have values 1-6 for 🎲, 🎯, and 🎳, values 1-5 for 🏀 and ⚽,
 	// and values 1-64 for 🎰.
-	// Defaults to “🎲”
+	// Defaults to "🎲"
 	Emoji string
 }
 
@@ -3099,7 +3333,7 @@ func (config GetMyDescriptionConfig) params() (Params, error) {
 type SetMyDescriptionConfig struct {
 	// Pass an empty string to remove the dedicated description for the given language.
 	Description string
-	//If empty, the description will be applied to all users for whose language there is no dedicated description.
+	// If empty, the description will be applied to all users for whose language there is no dedicated description.
 	LanguageCode string
 }
 
@@ -3227,180 +3461,113 @@ func (config GetMyDefaultAdministratorRightsConfig) params() (Params, error) {
 	return params, nil
 }
 
-// prepareInputMediaParam evaluates a single InputMedia and determines if it
-// needs to be modified for a successful upload. If it returns nil, then the
-// value does not need to be included in the params. Otherwise, it will return
-// the same type as was originally provided.
-//
-// The idx is used to calculate the file field name. If you only have a single
-// file, 0 may be used. It is formatted into "attach://file-%d" for the primary
-// media and "attach://file-%d-thumb" for thumbnails.
-//
-// It is expected to be used in conjunction with prepareInputMediaFile.
-func prepareInputMediaParam(inputMedia interface{}, idx int) interface{} {
-	switch m := inputMedia.(type) {
-	case InputMediaPhoto:
-		if m.Media.NeedsUpload() {
-			m.Media = fileAttach(fmt.Sprintf("attach://file-%d", idx))
+// prepareInputMediaForParams processes media items for API parameters.
+// It creates a copy of the media array with files prepared for upload.
+func prepareInputMediaForParams(inputMedia []InputMedia) []InputMedia {
+	newMedias := cloneMediaSlice(inputMedia)
+	for idx, media := range newMedias {
+		if media.getMedia().NeedsUpload() {
+			media.setUploadMedia(fmt.Sprintf("attach://file-%d", idx))
 		}
 
-		return m
-	case InputMediaVideo:
-		if m.Media.NeedsUpload() {
-			m.Media = fileAttach(fmt.Sprintf("attach://file-%d", idx))
+		if thumb := media.getThumb(); thumb != nil && thumb.NeedsUpload() {
+			media.setUploadThumb(fmt.Sprintf("attach://file-%d-thumb", idx))
 		}
 
-		if m.Thumb != nil && m.Thumb.NeedsUpload() {
-			m.Thumb = fileAttach(fmt.Sprintf("attach://file-%d-thumb", idx))
-		}
-
-		return m
-	case InputMediaAudio:
-		if m.Media.NeedsUpload() {
-			m.Media = fileAttach(fmt.Sprintf("attach://file-%d", idx))
-		}
-
-		if m.Thumb != nil && m.Thumb.NeedsUpload() {
-			m.Thumb = fileAttach(fmt.Sprintf("attach://file-%d-thumb", idx))
-		}
-
-		return m
-	case InputMediaAnimation:
-		if m.Media.NeedsUpload() {
-			m.Media = fileAttach(fmt.Sprintf("attach://file-%d", idx))
-		}
-
-		if m.Thumb != nil && m.Thumb.NeedsUpload() {
-			m.Thumb = fileAttach(fmt.Sprintf("attach://file-%d-thumb", idx))
-		}
-
-		return m
-	case InputMediaDocument:
-		if m.Media.NeedsUpload() {
-			m.Media = fileAttach(fmt.Sprintf("attach://file-%d", idx))
-		}
-
-		if m.Thumb != nil && m.Thumb.NeedsUpload() {
-			m.Thumb = fileAttach(fmt.Sprintf("attach://file-%d-thumb", idx))
-		}
-
-		return m
+		newMedias[idx] = media
 	}
 
+	return newMedias
+}
+
+// prepareInputMediaForFiles generates RequestFile objects for media items
+// that need to be uploaded.
+func prepareInputMediaForFiles(inputMedia []InputMedia) []RequestFile {
+	files := []RequestFile{}
+
+	for idx, media := range inputMedia {
+		if media.getMedia() != nil && media.getMedia().NeedsUpload() {
+			files = append(files, RequestFile{
+				Name: fmt.Sprintf("file-%d", idx),
+				Data: media.getMedia(),
+			})
+		}
+
+		if thumb := media.getThumb(); thumb != nil && thumb.NeedsUpload() {
+			files = append(files, RequestFile{
+				Name: fmt.Sprintf("file-%d-thumb", idx),
+				Data: thumb,
+			})
+		}
+	}
+
+	return files
+}
+
+func ptr[T any](v T) *T {
+	return &v
+}
+
+func cloneMediaSlice(media []InputMedia) []InputMedia {
+	cloned := make([]InputMedia, len(media))
+	for i, m := range media {
+		cloned[i] = cloneInputMedia(m)
+	}
+	return cloned
+}
+
+func cloneInputMedia(media InputMedia) InputMedia {
+	if media == nil {
+		return nil
+	}
+
+	switch m := media.(type) {
+	case *InputMediaPhoto:
+		return ptr(*m)
+	case *InputMediaVideo:
+		return ptr(*m)
+	case *InputMediaAnimation:
+		return ptr(*m)
+	case *InputMediaAudio:
+		return ptr(*m)
+	case *InputMediaDocument:
+		return ptr(*m)
+	case *InputPaidMedia:
+		clone := &InputPaidMedia{
+			Type:              m.Type,
+			Thumb:             m.Thumb,
+			Width:             m.Width,
+			Height:            m.Height,
+			Duration:          m.Duration,
+			SupportsStreaming: m.SupportsStreaming,
+		}
+		if m.Media != nil {
+			clone.Media = cloneInputMedia(m.Media)
+		}
+		return clone
+	case *PaidMediaConfig:
+		clone := &PaidMediaConfig{
+			BaseChat:              m.BaseChat,
+			StarCount:             m.StarCount,
+			Caption:               m.Caption,
+			ParseMode:             m.ParseMode,
+			CaptionEntities:       m.CaptionEntities,
+			ShowCaptionAboveMedia: m.ShowCaptionAboveMedia,
+		}
+		if m.Media != nil {
+			clone.Media = &InputPaidMedia{
+				Type:              m.Media.Type,
+				Thumb:             m.Media.Thumb,
+				Width:             m.Media.Width,
+				Height:            m.Media.Height,
+				Duration:          m.Media.Duration,
+				SupportsStreaming: m.Media.SupportsStreaming,
+			}
+			if m.Media.Media != nil {
+				clone.Media.Media = cloneInputMedia(m.Media.Media)
+			}
+		}
+		return clone
+	}
 	return nil
-}
-
-// prepareInputMediaFile generates an array of RequestFile to provide for
-// Fileable's files method. It returns an array as a single InputMedia may have
-// multiple files, for the primary media and a thumbnail.
-//
-// The idx parameter is used to generate file field names. It uses the names
-// "file-%d" for the main file and "file-%d-thumb" for the thumbnail.
-//
-// It is expected to be used in conjunction with prepareInputMediaParam.
-func prepareInputMediaFile(inputMedia interface{}, idx int) []RequestFile {
-	files := []RequestFile{}
-
-	switch m := inputMedia.(type) {
-	case InputMediaPhoto:
-		if m.Media.NeedsUpload() {
-			files = append(files, RequestFile{
-				Name: fmt.Sprintf("file-%d", idx),
-				Data: m.Media,
-			})
-		}
-	case InputMediaVideo:
-		if m.Media.NeedsUpload() {
-			files = append(files, RequestFile{
-				Name: fmt.Sprintf("file-%d", idx),
-				Data: m.Media,
-			})
-		}
-
-		if m.Thumb != nil && m.Thumb.NeedsUpload() {
-			files = append(files, RequestFile{
-				Name: fmt.Sprintf("file-%d", idx),
-				Data: m.Thumb,
-			})
-		}
-	case InputMediaAnimation:
-		if m.Media.NeedsUpload() {
-			files = append(files, RequestFile{
-				Name: fmt.Sprintf("file-%d", idx),
-				Data: m.Media,
-			})
-		}
-
-		if m.Thumb != nil && m.Thumb.NeedsUpload() {
-			files = append(files, RequestFile{
-				Name: fmt.Sprintf("file-%d", idx),
-				Data: m.Thumb,
-			})
-		}
-	case InputMediaDocument:
-		if m.Media.NeedsUpload() {
-			files = append(files, RequestFile{
-				Name: fmt.Sprintf("file-%d", idx),
-				Data: m.Media,
-			})
-		}
-
-		if m.Thumb != nil && m.Thumb.NeedsUpload() {
-			files = append(files, RequestFile{
-				Name: fmt.Sprintf("file-%d", idx),
-				Data: m.Thumb,
-			})
-		}
-	case InputMediaAudio:
-		if m.Media.NeedsUpload() {
-			files = append(files, RequestFile{
-				Name: fmt.Sprintf("file-%d", idx),
-				Data: m.Media,
-			})
-		}
-
-		if m.Thumb != nil && m.Thumb.NeedsUpload() {
-			files = append(files, RequestFile{
-				Name: fmt.Sprintf("file-%d", idx),
-				Data: m.Thumb,
-			})
-		}
-	}
-
-	return files
-}
-
-// prepareInputMediaForParams calls prepareInputMediaParam for each item
-// provided and returns a new array with the correct params for a request.
-//
-// It is expected that files will get data from the associated function,
-// prepareInputMediaForFiles.
-func prepareInputMediaForParams(inputMedia []interface{}) []interface{} {
-	newMedia := make([]interface{}, len(inputMedia))
-	copy(newMedia, inputMedia)
-
-	for idx, media := range inputMedia {
-		if param := prepareInputMediaParam(media, idx); param != nil {
-			newMedia[idx] = param
-		}
-	}
-
-	return newMedia
-}
-
-// prepareInputMediaForFiles calls prepareInputMediaFile for each item
-// provided and returns a new array with the correct files for a request.
-//
-// It is expected that params will get data from the associated function,
-// prepareInputMediaForParams.
-func prepareInputMediaForFiles(inputMedia []interface{}) []RequestFile {
-	files := []RequestFile{}
-
-	for idx, media := range inputMedia {
-		if file := prepareInputMediaFile(media, idx); file != nil {
-			files = append(files, file...)
-		}
-	}
-
-	return files
 }

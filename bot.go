@@ -278,7 +278,6 @@ func (bot *BotAPI) UploadFilesWithContext(ctx context.Context, endpoint string, 
 // It requires the FileID.
 func (bot *BotAPI) GetFileDirectURL(fileID string) (string, error) {
 	file, err := bot.GetFile(FileConfig{fileID})
-
 	if err != nil {
 		return "", err
 	}
@@ -785,6 +784,19 @@ func (bot *BotAPI) GetMyDefaultAdministratorRights(config GetMyDefaultAdministra
 
 	err = json.Unmarshal(resp.Result, &rights)
 	return rights, err
+}
+
+// CreateForumTopic creates a topic in a forum supergroup chat.
+func (bot *BotAPI) CreateForumTopic(config CreateForumTopicConfig) (ForumTopic, error) {
+	var topic ForumTopic
+
+	resp, err := bot.Request(config)
+	if err != nil {
+		return topic, err
+	}
+
+	err = json.Unmarshal(resp.Result, &topic)
+	return topic, err
 }
 
 // EscapeText takes an input text and escape Telegram markup symbols.

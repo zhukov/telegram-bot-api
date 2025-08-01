@@ -53,6 +53,40 @@ func NewDeleteMessages(chatID int64, messageIDs []int) DeleteMessagesConfig {
 	}
 }
 
+// NewVerifyUser verifies user on behalf of the organization
+// which is represented by the bot
+func NewVerifyUser(userID int64, customDescription string) VerifyUserConfig {
+	return VerifyUserConfig{
+		UserID:            userID,
+		CustomDescription: customDescription,
+	}
+}
+
+// NewVerifyChat verifies chat on behalf of the organization
+// which is represented by the bot
+func NewVerifyChat(chat ChatConfig, customDescription string) VerifyChatConfig {
+	return VerifyChatConfig{
+		Chat:              chat,
+		CustomDescription: customDescription,
+	}
+}
+
+// NewRemoveUserVerification removes verification from a user who is currently
+// verified on behalf of the organization represented by the bot.
+func NewRemoveUserVerification(userID int64) RemoveUserVerificationConfig {
+	return RemoveUserVerificationConfig{
+		UserID:            userID,
+	}
+}
+
+// NewRemoveChatVerification removes verification from a chat that is currently
+//  verified on behalf of the organization represented by the bot.
+func NewRemoveChatVerification(chat ChatConfig) RemoveChatVerificationConfig {
+	return RemoveChatVerificationConfig{
+		Chat:              chat,
+	}
+}
+
 // NewMessageToChannel creates a new Message that is sent to a channel
 // by username.
 //
@@ -63,7 +97,8 @@ func NewMessageToChannel(username string, text string) MessageConfig {
 		BaseChat: BaseChat{
 			ChatConfig: ChatConfig{
 				ChannelUsername: username,
-			}},
+			},
+		},
 		Text: text,
 	}
 }
@@ -218,7 +253,7 @@ func NewVoice(chatID int64, file RequestFileData) VoiceConfig {
 
 // NewMediaGroup creates a new media group. Files should be an array of
 // two to ten InputMediaPhoto or InputMediaVideo.
-func NewMediaGroup(chatID int64, files []interface{}) MediaGroupConfig {
+func NewMediaGroup(chatID int64, files []InputMedia) MediaGroupConfig {
 	return MediaGroupConfig{
 		BaseChat: BaseChat{
 			ChatConfig: ChatConfig{ChatID: chatID},
@@ -344,6 +379,17 @@ func NewUserProfilePhotos(userID int64) UserProfilePhotosConfig {
 	}
 }
 
+// NewSetUserEmojiStatus changes the user's emoji status.
+//
+// userID is the ID of the user you wish to get profile photos from.
+func NewSetUserEmojiStatus(userID int64, emojiID string, statusExpDate int64) SetUserEmojiStatusConfig {
+	return SetUserEmojiStatusConfig{
+		UserID:                    userID,
+		EmojiStatusCustomEmojiID:  emojiID,
+		EmojiStatusExpirationDate: statusExpDate,
+	}
+}
+
 // NewUpdate gets updates since the last Offset.
 //
 // offset is the last Update ID to include.
@@ -361,7 +407,6 @@ func NewUpdate(offset int) UpdateConfig {
 // link is the url parsable link you wish to get the updates.
 func NewWebhook(link string) (WebhookConfig, error) {
 	u, err := url.Parse(link)
-
 	if err != nil {
 		return WebhookConfig{}, err
 	}
@@ -377,7 +422,6 @@ func NewWebhook(link string) (WebhookConfig, error) {
 // file contains a string to a file, FileReader, or FileBytes.
 func NewWebhookWithCert(link string, file RequestFileData) (WebhookConfig, error) {
 	u, err := url.Parse(link)
-
 	if err != nil {
 		return WebhookConfig{}, err
 	}
@@ -616,7 +660,7 @@ func NewInlineQueryResultVenue(id, title, address string, latitude, longitude fl
 }
 
 // NewEditMessageMedia allows you to edit the media content of a message.
-func NewEditMessageMedia(chatID int64, messageID int, inputMedia interface{}) EditMessageMediaConfig {
+func NewEditMessageMedia(chatID int64, messageID int, inputMedia InputMedia) EditMessageMediaConfig {
 	return EditMessageMediaConfig{
 		BaseEdit: BaseEdit{
 			BaseChatMessage: BaseChatMessage{
@@ -632,27 +676,27 @@ func NewEditMessageMedia(chatID int64, messageID int, inputMedia interface{}) Ed
 
 // NewEditMessagePhoto allows you to edit the photo content of a message.
 func NewEditMessagePhoto(chatID int64, messageID int, inputPhoto InputMediaPhoto) EditMessageMediaConfig {
-	return NewEditMessageMedia(chatID, messageID, inputPhoto)
+	return NewEditMessageMedia(chatID, messageID, &inputPhoto)
 }
 
 // NewEditMessageVideo allows you to edit the video content of a message.
 func NewEditMessageVideo(chatID int64, messageID int, inputVideo InputMediaVideo) EditMessageMediaConfig {
-	return NewEditMessageMedia(chatID, messageID, inputVideo)
+	return NewEditMessageMedia(chatID, messageID, &inputVideo)
 }
 
 // NewEditMessageAnimation allows you to edit the animation content of a message.
 func NewEditMessageAnimation(chatID int64, messageID int, inputAnimation InputMediaAnimation) EditMessageMediaConfig {
-	return NewEditMessageMedia(chatID, messageID, inputAnimation)
+	return NewEditMessageMedia(chatID, messageID, &inputAnimation)
 }
 
 // NewEditMessageAudio allows you to edit the audio content of a message.
 func NewEditMessageAudio(chatID int64, messageID int, inputAudio InputMediaAudio) EditMessageMediaConfig {
-	return NewEditMessageMedia(chatID, messageID, inputAudio)
+	return NewEditMessageMedia(chatID, messageID, &inputAudio)
 }
 
 // NewEditMessageDocument allows you to edit the document content of a message.
 func NewEditMessageDocument(chatID int64, messageID int, inputDocument InputMediaDocument) EditMessageMediaConfig {
-	return NewEditMessageMedia(chatID, messageID, inputDocument)
+	return NewEditMessageMedia(chatID, messageID, &inputDocument)
 }
 
 // NewEditMessageText allows you to edit the text of a message.
@@ -1262,4 +1306,54 @@ func ValidateWebAppData(token, telegramInitData string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+// NewPaidMedia creates a new PaidMediaConfig.
+// chatID is where to send it, starCount is the number of stars to charge,
+// and media is the InputPaidMedia to send.
+func NewPaidMedia(chatID, starCount int64, media *InputPaidMedia) PaidMediaConfig {
+	return PaidMediaConfig{
+		BaseChat: BaseChat{
+			ChatConfig: ChatConfig{ChatID: chatID},
+		},
+		StarCount: starCount,
+		Media:     media,
+	}
+}
+
+// NewInputPaidMediaPhoto creates a new InputPaidMedia for photos.
+func NewInputPaidMediaPhoto(media *InputMediaPhoto) InputPaidMedia {
+	return InputPaidMedia{
+		Type:  "photo",
+		Media: media,
+	}
+}
+
+// NewInputPaidMediaVideo creates a new InputPaidMedia for videos.
+func NewInputPaidMediaVideo(media *InputMediaVideo) InputPaidMedia {
+	return InputPaidMedia{
+		Type:  "video",
+		Media: media,
+	}
+}
+
+// NewCreateForumTopicConfig creates a topic in a forum supergroup chat.
+func NewCreateForumTopicConfig(chatID int64, topicName string) CreateForumTopicConfig {
+	return CreateForumTopicConfig{
+		ChatConfig: ChatConfig{
+			ChatID: chatID,
+		},
+		Name: topicName,
+	}
+}
+
+// NewEditForumTopicConfig edit name and icon of a topic in a forum supergroup chat.
+func NewEditForumTopicConfig(chatID, threadID int64, topicName string) EditForumTopicConfig {
+	return EditForumTopicConfig{
+		BaseForum: BaseForum{
+			ChatConfig:      ChatConfig{ChatID: chatID},
+			MessageThreadID: int(threadID),
+		},
+		Name: topicName,
+	}
 }
