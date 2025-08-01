@@ -5256,8 +5256,6 @@ type SuccessfulPayment struct {
 	TelegramPaymentChargeID string `json:"telegram_payment_charge_id"`
 	// ProviderPaymentChargeID provider payment identifier
 	ProviderPaymentChargeID string `json:"provider_payment_charge_id"`
-
-	SubscriptionExpirationDate int `json:"subscription_expiration_date"`
 }
 
 // RefundPayment contains basic information about a refunded payment.
