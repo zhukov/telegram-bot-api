@@ -799,6 +799,20 @@ func (bot *BotAPI) CreateForumTopic(config CreateForumTopicConfig) (ForumTopic, 
 	return topic, err
 }
 
+// SavePreparedInlineMessage Stores a message that can be sent by a user of a Mini App. Returns a PreparedInlineMessage object.
+func SavePreparedInlineMessage[T InlineQueryResults](bot *BotAPI, config SavePreparedInlineMessageConfig[T]) (PreparedInlineMessage, error) {
+	resp, err := bot.Request(config)
+	if err != nil {
+		return PreparedInlineMessage{}, err
+	}
+
+	var preparedInlineMessage PreparedInlineMessage
+	err = json.Unmarshal(resp.Result, &preparedInlineMessage)
+
+	return preparedInlineMessage, err
+}
+
+
 // EscapeText takes an input text and escape Telegram markup symbols.
 // In this way we can send a text without being afraid of having to escape the characters manually.
 // Note that you don't have to include the formatting style in the input text, or it will be escaped too.

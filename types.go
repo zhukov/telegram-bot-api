@@ -4059,21 +4059,25 @@ type InlineQuery struct {
 // and ensuring only supported inline query results are used.
 type InlineQueryResults interface {
 	InlineQueryResultCachedAudio |
-		InlineQueryResultCachedDocument |
-		InlineQueryResultCachedPhoto |
-		InlineQueryResultCachedSticker |
-		InlineQueryResultCachedVideo |
-		InlineQueryResultCachedVoice |
-		InlineQueryResultArticle |
-		InlineQueryResultAudio |
-		InlineQueryResultContact |
-		InlineQueryResultGame |
-		InlineQueryResultDocument |
-		InlineQueryResultLocation |
-		InlineQueryResultPhoto |
-		InlineQueryResultVenue |
-		InlineQueryResultVideo |
-		InlineQueryResultVoice
+	InlineQueryResultCachedDocument |
+	InlineQueryResultCachedGIF |
+	InlineQueryResultCachedMPEG4GIF |
+	InlineQueryResultCachedPhoto |
+	InlineQueryResultCachedSticker |
+	InlineQueryResultCachedVideo |
+	InlineQueryResultCachedVoice |
+	InlineQueryResultArticle |
+	InlineQueryResultAudio |
+	InlineQueryResultContact |
+	InlineQueryResultGame |
+	InlineQueryResultDocument |
+	InlineQueryResultGIF |
+	InlineQueryResultLocation |
+	InlineQueryResultMPEG4GIF |
+	InlineQueryResultPhoto |
+	InlineQueryResultVenue |
+	InlineQueryResultVideo |
+	InlineQueryResultVoice
 }
 
 // InlineQueryResultCachedAudio is an inline query response with cached audio.
@@ -4948,7 +4952,7 @@ type SentWebAppMessage struct {
 
 // PreparedInlineMessage describes an inline message to be sent by a user of a Mini App.
 type PreparedInlineMessage struct {
-	// ID is an unique identifier of the prepared message
+	// ID is a unique identifier of the prepared message
 	ID string `json:"id"`
 	// ExpirationDate of the prepared message, in Unix time.
 	// Expired prepared messages can no longer be used
