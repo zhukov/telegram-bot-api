@@ -3217,6 +3217,32 @@ func (config BusinessConnectionID) params() (Params, error) {
 	return params, nil
 }
 
+// ReadBusinessMessageConfig contains information of a message in a chat to make as read.
+type ReadBusinessMessageConfig struct {
+	BaseChatMessage
+}
+
+func (config ReadBusinessMessageConfig) method() string {
+	return "readBusinessMessage"
+}
+
+func (config ReadBusinessMessageConfig) params() (Params, error) {
+	return config.BaseChatMessage.params()
+}
+
+// DeleteBusinessMessageConfig contains information of a message in a chat to make as read.
+type DeleteBusinessMessageConfig struct {
+	BaseChatMessages
+}
+
+func (config DeleteBusinessMessageConfig) method() string {
+	return "deleteBusinessMessages"
+}
+
+func (config DeleteBusinessMessageConfig) params() (Params, error) {
+	return config.BaseChatMessages.params()
+}
+
 // GetMyCommandsConfig gets a list of the currently registered commands.
 type GetMyCommandsConfig struct {
 	Scope        *BotCommandScope
