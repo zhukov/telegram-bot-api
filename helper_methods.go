@@ -1242,9 +1242,9 @@ func NewReadBusinessMessage(chatID int64, messageID int, businessConnectionID st
 	}
 }
 
-// NewDeleteBusinessMessage gets business connection request struct
-func NewDeleteBusinessMessage(messageIDs []int, businessConnectionID string) DeleteBusinessMessageConfig {
-	return DeleteBusinessMessageConfig{
+// NewDeleteBusinessMessages gets business connection request struct
+func NewDeleteBusinessMessages(messageIDs []int, businessConnectionID string) DeleteBusinessMessagesConfig {
+	return DeleteBusinessMessagesConfig{
 		BaseChatMessages: BaseChatMessages{
 			MessageIDs:           messageIDs,
 			BusinessConnectionID: BusinessConnectionID(businessConnectionID),

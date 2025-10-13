@@ -3230,16 +3230,16 @@ func (config ReadBusinessMessageConfig) params() (Params, error) {
 	return config.BaseChatMessage.params()
 }
 
-// DeleteBusinessMessageConfig contains information of a message in a chat to make as read.
-type DeleteBusinessMessageConfig struct {
+// DeleteBusinessMessagesConfig contains information of a message in a chat to make as read.
+type DeleteBusinessMessagesConfig struct {
 	BaseChatMessages
 }
 
-func (config DeleteBusinessMessageConfig) method() string {
+func (config DeleteBusinessMessagesConfig) method() string {
 	return "deleteBusinessMessages"
 }
 
-func (config DeleteBusinessMessageConfig) params() (Params, error) {
+func (config DeleteBusinessMessagesConfig) params() (Params, error) {
 	return config.BaseChatMessages.params()
 }
 
