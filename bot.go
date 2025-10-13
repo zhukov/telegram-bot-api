@@ -812,7 +812,6 @@ func SavePreparedInlineMessage[T InlineQueryResults](bot *BotAPI, config SavePre
 	return preparedInlineMessage, err
 }
 
-
 // EscapeText takes an input text and escape Telegram markup symbols.
 // In this way we can send a text without being afraid of having to escape the characters manually.
 // Note that you don't have to include the formatting style in the input text, or it will be escaped too.
