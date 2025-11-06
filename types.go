@@ -320,6 +320,10 @@ type Chat struct {
 	//
 	// optional
 	IsForum bool `json:"is_forum,omitempty"`
+	// IsDirectMessages is true if the chat is the direct messages chat of a channel
+	//
+	// optional
+	IsDirectMessages bool `json:"is_direct_messages,omitempty"`
 }
 
 // ChatFullInfo contains full information about a chat.
@@ -4059,25 +4063,25 @@ type InlineQuery struct {
 // and ensuring only supported inline query results are used.
 type InlineQueryResults interface {
 	InlineQueryResultCachedAudio |
-	InlineQueryResultCachedDocument |
-	InlineQueryResultCachedGIF |
-	InlineQueryResultCachedMPEG4GIF |
-	InlineQueryResultCachedPhoto |
-	InlineQueryResultCachedSticker |
-	InlineQueryResultCachedVideo |
-	InlineQueryResultCachedVoice |
-	InlineQueryResultArticle |
-	InlineQueryResultAudio |
-	InlineQueryResultContact |
-	InlineQueryResultGame |
-	InlineQueryResultDocument |
-	InlineQueryResultGIF |
-	InlineQueryResultLocation |
-	InlineQueryResultMPEG4GIF |
-	InlineQueryResultPhoto |
-	InlineQueryResultVenue |
-	InlineQueryResultVideo |
-	InlineQueryResultVoice
+		InlineQueryResultCachedDocument |
+		InlineQueryResultCachedGIF |
+		InlineQueryResultCachedMPEG4GIF |
+		InlineQueryResultCachedPhoto |
+		InlineQueryResultCachedSticker |
+		InlineQueryResultCachedVideo |
+		InlineQueryResultCachedVoice |
+		InlineQueryResultArticle |
+		InlineQueryResultAudio |
+		InlineQueryResultContact |
+		InlineQueryResultGame |
+		InlineQueryResultDocument |
+		InlineQueryResultGIF |
+		InlineQueryResultLocation |
+		InlineQueryResultMPEG4GIF |
+		InlineQueryResultPhoto |
+		InlineQueryResultVenue |
+		InlineQueryResultVideo |
+		InlineQueryResultVoice
 }
 
 // InlineQueryResultCachedAudio is an inline query response with cached audio.
