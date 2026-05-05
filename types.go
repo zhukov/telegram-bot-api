@@ -163,12 +163,24 @@ type Update struct {
 
 // SentFrom returns the user who sent an update. Can be nil, if Telegram did not provide information
 // about the user in the update object.
+//
+// For ManagedBot, it returns the bot instead of the user.
 func (u *Update) SentFrom() *User {
 	switch {
 	case u.Message != nil:
 		return u.Message.From
 	case u.EditedMessage != nil:
 		return u.EditedMessage.From
+	case u.ChannelPost != nil:
+		return u.ChannelPost.From
+	case u.EditedChannelPost != nil:
+		return u.EditedChannelPost.From
+	case u.BusinessMessage != nil:
+		return u.BusinessMessage.From
+	case u.EditedBusinessMessage != nil:
+		return u.EditedBusinessMessage.From
+	case u.MessageReaction != nil:
+		return u.MessageReaction.User
 	case u.InlineQuery != nil:
 		return u.InlineQuery.From
 	case u.ChosenInlineResult != nil:
@@ -179,6 +191,22 @@ func (u *Update) SentFrom() *User {
 		return u.ShippingQuery.From
 	case u.PreCheckoutQuery != nil:
 		return u.PreCheckoutQuery.From
+	case u.PurchasedPaidMedia != nil:
+		return &u.PurchasedPaidMedia.From
+	case u.PollAnswer != nil:
+		return u.PollAnswer.User
+	case u.MyChatMember != nil:
+		return &u.MyChatMember.From
+	case u.ChatMember != nil:
+		return &u.ChatMember.From
+	case u.ChatJoinRequest != nil:
+		return &u.ChatJoinRequest.From
+	case u.ChatBoost != nil:
+		return u.ChatBoost.Boost.Source.User
+	case u.ChatBoostRemoved != nil:
+		return u.ChatBoostRemoved.Source.User
+	case u.ManagedBot != nil:
+		return &u.ManagedBot.Bot
 	default:
 		return nil
 	}
