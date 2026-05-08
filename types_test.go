@@ -134,6 +134,140 @@ func TestPollUnmarshalLegacyCorrectOptionID(t *testing.T) {
 	}
 }
 
+func TestGuestMessageUnmarshalBotAPI10(t *testing.T) {
+	const body = `{
+		"update_id":1,
+		"guest_message":{
+			"message_id":10,
+			"guest_query_id":"guest-query",
+			"guest_bot_caller_user":{"id":2,"is_bot":false,"first_name":"Alice"},
+			"guest_bot_caller_chat":{"id":3,"type":"group","title":"Team"},
+			"from":{"id":4,"is_bot":false,"first_name":"Bob"},
+			"date":1,
+			"chat":{"id":5,"type":"group","title":"Work"},
+			"text":"hello"
+		}
+	}`
+
+	var update Update
+	if err := json.Unmarshal([]byte(body), &update); err != nil {
+		t.Fatal(err)
+	}
+
+	if update.GuestMessage == nil || update.GuestMessage.GuestQueryID != "guest-query" {
+		t.Fatalf("unexpected guest_message payload: %#v", update.GuestMessage)
+	}
+	if update.GuestMessage.GuestBotCallerUser == nil || update.GuestMessage.GuestBotCallerUser.ID != 2 {
+		t.Fatalf("unexpected guest caller user: %#v", update.GuestMessage.GuestBotCallerUser)
+	}
+	if update.SentFrom() == nil || update.SentFrom().ID != 4 {
+		t.Fatalf("unexpected SentFrom result: %#v", update.SentFrom())
+	}
+	if update.FromChat() == nil || update.FromChat().ID != 5 {
+		t.Fatalf("unexpected FromChat result: %#v", update.FromChat())
+	}
+}
+
+func TestBotAPI10MediaUnmarshal(t *testing.T) {
+	const body = `{
+		"message_id":1,
+		"date":1,
+		"chat":{"id":1,"type":"private"},
+		"live_photo":{
+			"file_id":"live",
+			"file_unique_id":"unique-live",
+			"width":640,
+			"height":480,
+			"duration":2,
+			"photo":[{"file_id":"photo","file_unique_id":"unique-photo","width":640,"height":480}]
+		},
+		"paid_media":{
+			"star_count":5,
+			"paid_media":[{
+				"type":"live_photo",
+				"live_photo":{
+					"file_id":"paid-live",
+					"file_unique_id":"paid-unique",
+					"width":640,
+					"height":480,
+					"duration":2
+				}
+			}]
+		}
+	}`
+
+	var message Message
+	if err := json.Unmarshal([]byte(body), &message); err != nil {
+		t.Fatal(err)
+	}
+
+	if message.LivePhoto == nil || message.LivePhoto.FileID != "live" || len(message.LivePhoto.Photo) != 1 {
+		t.Fatalf("unexpected live_photo: %#v", message.LivePhoto)
+	}
+	if message.PaidMedia == nil || len(message.PaidMedia.PaidMedia) != 1 ||
+		message.PaidMedia.PaidMedia[0].LivePhoto == nil ||
+		message.PaidMedia.PaidMedia[0].LivePhoto.FileID != "paid-live" {
+		t.Fatalf("unexpected paid media live photo: %#v", message.PaidMedia)
+	}
+}
+
+func TestPollUnmarshalBotAPI10MediaAndLimits(t *testing.T) {
+	const body = `{
+		"id":"poll-10",
+		"question":"q",
+		"options":[{
+			"persistent_id":"opt-1",
+			"text":"A",
+			"voter_count":1,
+			"media":{"sticker":{"file_id":"sticker","file_unique_id":"sticker-unique","type":"regular","width":512,"height":512,"is_animated":false,"is_video":false}}
+		}],
+		"total_voter_count":1,
+		"is_closed":false,
+		"is_anonymous":false,
+		"type":"regular",
+		"allows_multiple_answers":false,
+		"members_only":true,
+		"country_codes":["US","PL"],
+		"media":{"location":{"latitude":10.5,"longitude":20.25}},
+		"explanation_media":{"live_photo":{"file_id":"live","file_unique_id":"unique","width":1,"height":1,"duration":1}}
+	}`
+
+	var poll Poll
+	if err := json.Unmarshal([]byte(body), &poll); err != nil {
+		t.Fatal(err)
+	}
+
+	if !poll.MembersOnly || len(poll.CountryCodes) != 2 || poll.Media == nil || poll.Media.Location == nil {
+		t.Fatalf("unexpected poll media/limits: %#v", poll)
+	}
+	if poll.ExplanationMedia == nil || poll.ExplanationMedia.LivePhoto == nil {
+		t.Fatalf("unexpected explanation media: %#v", poll.ExplanationMedia)
+	}
+	if len(poll.Options) != 1 || poll.Options[0].Media == nil || poll.Options[0].Media.Sticker == nil {
+		t.Fatalf("unexpected option media: %#v", poll.Options)
+	}
+}
+
+func TestBotAPI10PermissionsUnmarshal(t *testing.T) {
+	const permissionsBody = `{"can_send_messages":true,"can_react_to_messages":true}`
+	var permissions ChatPermissions
+	if err := json.Unmarshal([]byte(permissionsBody), &permissions); err != nil {
+		t.Fatal(err)
+	}
+	if !permissions.CanReactToMessages {
+		t.Fatalf("expected can_react_to_messages: %#v", permissions)
+	}
+
+	const memberBody = `{"user":{"id":1,"is_bot":false,"first_name":"A"},"status":"restricted","is_member":true,"can_react_to_messages":true}`
+	var member ChatMember
+	if err := json.Unmarshal([]byte(memberBody), &member); err != nil {
+		t.Fatal(err)
+	}
+	if !member.CanReactToMessages {
+		t.Fatalf("expected member can_react_to_messages: %#v", member)
+	}
+}
+
 func TestPollAnswerUnmarshalBotAPI96(t *testing.T) {
 	const body = `{"poll_id":"poll-1","option_ids":[0],"option_persistent_ids":["opt-1"]}`
 

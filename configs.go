@@ -73,6 +73,9 @@ const (
 	// UpdateTypeDeletedBusinessMessages are the messages were deleted from a connected business account
 	UpdateTypeDeletedBusinessMessages = "deleted_business_messages"
 
+	// UpdateTypeGuestMessage is a new message from a user who invoked the bot in guest mode.
+	UpdateTypeGuestMessage = "guest_message"
+
 	// UpdateTypeMessageReactionis is a reaction to a message was changed by a user
 	UpdateTypeMessageReaction = "message_reaction"
 
@@ -557,6 +560,62 @@ func (config PhotoConfig) files() []RequestFile {
 	return files
 }
 
+// SendLivePhotoConfig contains information about a sendLivePhoto request.
+type SendLivePhotoConfig struct {
+	BaseChat
+	BaseSpoiler
+	LivePhoto             RequestFileData
+	Photo                 RequestFileData
+	Caption               string
+	ParseMode             string
+	CaptionEntities       []MessageEntity
+	ShowCaptionAboveMedia bool
+}
+
+func (config SendLivePhotoConfig) params() (Params, error) {
+	params, err := config.BaseChat.params()
+	if err != nil {
+		return params, err
+	}
+
+	params.AddNonEmpty("caption", config.Caption)
+	params.AddNonEmpty("parse_mode", config.ParseMode)
+	params.AddBool("show_caption_above_media", config.ShowCaptionAboveMedia)
+	if err = params.AddInterface("caption_entities", config.CaptionEntities); err != nil {
+		return params, err
+	}
+
+	p1, err := config.BaseSpoiler.params()
+	if err != nil {
+		return params, err
+	}
+	params.Merge(p1)
+
+	return params, nil
+}
+
+func (config SendLivePhotoConfig) method() string {
+	return "sendLivePhoto"
+}
+
+func (config SendLivePhotoConfig) files() []RequestFile {
+	files := make([]RequestFile, 0, 2)
+	if config.LivePhoto != nil {
+		files = append(files, RequestFile{
+			Name: "live_photo",
+			Data: config.LivePhoto,
+		})
+	}
+	if config.Photo != nil {
+		files = append(files, RequestFile{
+			Name: "photo",
+			Data: config.Photo,
+		})
+	}
+
+	return files
+}
+
 // AudioConfig contains information about a SendAudio request.
 type AudioConfig struct {
 	BaseFile
@@ -872,23 +931,11 @@ func (config PaidMediaConfig) params() (Params, error) {
 }
 
 func (config PaidMediaConfig) files() []RequestFile {
-	files := []RequestFile{}
-
-	if config.Media.getMedia().NeedsUpload() {
-		files = append(files, RequestFile{
-			Name: "file-0",
-			Data: config.Media.getMedia(),
-		})
+	if config.Media == nil {
+		return nil
 	}
 
-	if thumb := config.Media.getThumb(); thumb != nil && thumb.NeedsUpload() {
-		files = append(files, RequestFile{
-			Name: "file-0-thumb",
-			Data: thumb,
-		})
-	}
-
-	return files
+	return prepareInputMediaForFiles([]InputMedia{config.Media})
 }
 
 func (config PaidMediaConfig) method() string {
@@ -1091,6 +1138,10 @@ type SendPollConfig struct {
 	Description          string
 	DescriptionParseMode string
 	DescriptionEntities  []MessageEntity
+	ExplanationMedia     InputMedia
+	Media                InputMedia
+	MembersOnly          bool
+	CountryCodes         []string
 }
 
 func (config SendPollConfig) params() (Params, error) {
@@ -1104,7 +1155,8 @@ func (config SendPollConfig) params() (Params, error) {
 	if err = params.AddInterface("question_entities", config.QuestionEntities); err != nil {
 		return params, err
 	}
-	if err = params.AddInterface("options", config.Options); err != nil {
+	options := prepareInputPollOptionsForParams(config.Options)
+	if err = params.AddInterface("options", options); err != nil {
 		return params, err
 	}
 	params["is_anonymous"] = strconv.FormatBool(config.IsAnonymous)
@@ -1134,13 +1186,42 @@ func (config SendPollConfig) params() (Params, error) {
 	if err = params.AddInterface("explanation_entities", config.ExplanationEntities); err != nil {
 		return params, err
 	}
-	err = params.AddInterface("description_entities", config.DescriptionEntities)
+	if err = params.AddInterface("description_entities", config.DescriptionEntities); err != nil {
+		return params, err
+	}
+	if config.ExplanationMedia != nil {
+		media := prepareInputMediaForParamsWithPrefix([]InputMedia{config.ExplanationMedia}, "explanation-media")
+		if err = params.AddInterface("explanation_media", media[0]); err != nil {
+			return params, err
+		}
+	}
+	if config.Media != nil {
+		media := prepareInputMediaForParamsWithPrefix([]InputMedia{config.Media}, "poll-media")
+		if err = params.AddInterface("media", media[0]); err != nil {
+			return params, err
+		}
+	}
+	params.AddBool("members_only", config.MembersOnly)
+	err = params.AddInterface("country_codes", config.CountryCodes)
 
 	return params, err
 }
 
 func (SendPollConfig) method() string {
 	return "sendPoll"
+}
+
+func (config SendPollConfig) files() []RequestFile {
+	files := make([]RequestFile, 0)
+	if config.ExplanationMedia != nil {
+		files = append(files, prepareInputMediaForFilesWithPrefix([]InputMedia{config.ExplanationMedia}, "explanation-media")...)
+	}
+	if config.Media != nil {
+		files = append(files, prepareInputMediaForFilesWithPrefix([]InputMedia{config.Media}, "poll-media")...)
+	}
+	files = append(files, prepareInputPollOptionsForFiles(config.Options)...)
+
+	return files
 }
 
 // GameConfig allows you to send a game.
@@ -1449,6 +1530,52 @@ func (SetMessageReactionConfig) method() string {
 	return "setMessageReaction"
 }
 
+// DeleteMessageReactionConfig removes a reaction from a message. Returns true on success.
+type DeleteMessageReactionConfig struct {
+	BaseChatMessage
+	UserID      int64
+	ActorChatID int64
+}
+
+func (DeleteMessageReactionConfig) method() string {
+	return "deleteMessageReaction"
+}
+
+func (config DeleteMessageReactionConfig) params() (Params, error) {
+	params, err := config.BaseChatMessage.params()
+	if err != nil {
+		return params, err
+	}
+
+	params.AddNonZero64("user_id", config.UserID)
+	params.AddNonZero64("actor_chat_id", config.ActorChatID)
+
+	return params, nil
+}
+
+// DeleteAllMessageReactionsConfig removes all recent reactions from a user or actor chat. Returns true on success.
+type DeleteAllMessageReactionsConfig struct {
+	ChatConfig
+	UserID      int64
+	ActorChatID int64
+}
+
+func (DeleteAllMessageReactionsConfig) method() string {
+	return "deleteAllMessageReactions"
+}
+
+func (config DeleteAllMessageReactionsConfig) params() (Params, error) {
+	params, err := config.ChatConfig.params()
+	if err != nil {
+		return params, err
+	}
+
+	params.AddNonZero64("user_id", config.UserID)
+	params.AddNonZero64("actor_chat_id", config.ActorChatID)
+
+	return params, nil
+}
+
 // UserProfilePhotosConfig contains information about a
 // GetUserProfilePhotos request.
 type UserProfilePhotosConfig struct {
@@ -1487,6 +1614,25 @@ func (config UserProfileAudiosConfig) params() (Params, error) {
 
 	params.AddNonZero64("user_id", config.UserID)
 	params.AddNonZero("offset", config.Offset)
+	params.AddNonZero("limit", config.Limit)
+
+	return params, nil
+}
+
+// UserPersonalChatMessagesConfig contains information about a getUserPersonalChatMessages request.
+type UserPersonalChatMessagesConfig struct {
+	UserID int64
+	Limit  int
+}
+
+func (UserPersonalChatMessagesConfig) method() string {
+	return "getUserPersonalChatMessages"
+}
+
+func (config UserPersonalChatMessagesConfig) params() (Params, error) {
+	params := make(Params)
+
+	params.AddNonZero64("user_id", config.UserID)
 	params.AddNonZero("limit", config.Limit)
 
 	return params, nil
@@ -1677,6 +1823,25 @@ func (config AnswerWebAppQueryConfig) params() (Params, error) {
 	params := make(Params)
 
 	params["web_app_query_id"] = config.WebAppQueryID
+	err := params.AddInterface("result", config.Result)
+
+	return params, err
+}
+
+// AnswerGuestQueryConfig is used to reply to a received guest message.
+type AnswerGuestQueryConfig struct {
+	GuestQueryID string
+	Result       InlineQueryResult
+}
+
+func (config AnswerGuestQueryConfig) method() string {
+	return "answerGuestQuery"
+}
+
+func (config AnswerGuestQueryConfig) params() (Params, error) {
+	params := make(Params)
+
+	params["guest_query_id"] = config.GuestQueryID
 	err := params.AddInterface("result", config.Result)
 
 	return params, err
@@ -2014,10 +2179,22 @@ func (ChatMemberCountConfig) method() string {
 // ChatAdministratorsConfig contains information about getting chat administrators.
 type ChatAdministratorsConfig struct {
 	ChatConfig
+	ReturnBots bool
 }
 
 func (ChatAdministratorsConfig) method() string {
 	return "getChatAdministrators"
+}
+
+func (config ChatAdministratorsConfig) params() (Params, error) {
+	params, err := config.ChatConfig.params()
+	if err != nil {
+		return params, err
+	}
+
+	params.AddBool("return_bots", config.ReturnBots)
+
+	return params, nil
 }
 
 // SetChatPermissionsConfig allows you to set default permissions for the
@@ -3693,6 +3870,14 @@ type (
 	ReplaceManagedBotTokenConfig struct {
 		UserID int64
 	}
+	GetManagedBotAccessSettingsConfig struct {
+		UserID int64
+	}
+	SetManagedBotAccessSettingsConfig struct {
+		UserID             int64
+		IsAccessRestricted bool
+		AddedUserIDs       []int64
+	}
 	GetBusinessConnectionConfig struct {
 		BusinessConnectionID BusinessConnectionID
 	}
@@ -3719,6 +3904,30 @@ func (config ReplaceManagedBotTokenConfig) params() (Params, error) {
 	params.AddNonZero64("user_id", config.UserID)
 
 	return params, nil
+}
+
+func (GetManagedBotAccessSettingsConfig) method() string {
+	return "getManagedBotAccessSettings"
+}
+
+func (config GetManagedBotAccessSettingsConfig) params() (Params, error) {
+	params := make(Params)
+	params.AddNonZero64("user_id", config.UserID)
+
+	return params, nil
+}
+
+func (SetManagedBotAccessSettingsConfig) method() string {
+	return "setManagedBotAccessSettings"
+}
+
+func (config SetManagedBotAccessSettingsConfig) params() (Params, error) {
+	params := make(Params)
+	params.AddNonZero64("user_id", config.UserID)
+	params["is_access_restricted"] = strconv.FormatBool(config.IsAccessRestricted)
+	err := params.AddInterface("added_user_ids", config.AddedUserIDs)
+
+	return params, err
 }
 
 func (GetBusinessConnectionConfig) method() string {
@@ -4325,14 +4534,49 @@ func (config GetMyDefaultAdministratorRightsConfig) params() (Params, error) {
 // prepareInputMediaForParams processes media items for API parameters.
 // It creates a copy of the media array with files prepared for upload.
 func prepareInputMediaForParams(inputMedia []InputMedia) []InputMedia {
+	return prepareInputMediaForParamsWithPrefix(inputMedia, "file")
+}
+
+func prepareInputMediaForParamsWithPrefix(inputMedia []InputMedia, prefix string) []InputMedia {
 	newMedias := cloneMediaSlice(inputMedia)
 	for idx, media := range newMedias {
-		if media.getMedia().NeedsUpload() {
-			media.setUploadMedia(fmt.Sprintf("attach://file-%d", idx))
+		if media == nil {
+			continue
+		}
+
+		fileName := fmt.Sprintf("%s-%d", prefix, idx)
+		if input, ok := media.(*InputMediaLivePhoto); ok {
+			if input.Media != nil && input.Media.NeedsUpload() {
+				input.Media = fileAttach("attach://" + fileName)
+			}
+			if input.Photo != nil && input.Photo.NeedsUpload() {
+				input.Photo = fileAttach("attach://" + fileName + "-photo")
+			}
+			newMedias[idx] = input
+			continue
+		}
+		if paid, ok := media.(*InputPaidMedia); ok {
+			if paid.Photo != nil && paid.Photo.NeedsUpload() {
+				paid.Photo = fileAttach("attach://" + fileName + "-photo")
+			}
+			if livePhoto, ok := paid.Media.(*InputMediaLivePhoto); ok {
+				if livePhoto.Media != nil && livePhoto.Media.NeedsUpload() {
+					livePhoto.Media = fileAttach("attach://" + fileName)
+				}
+				if livePhoto.Photo != nil && livePhoto.Photo.NeedsUpload() {
+					livePhoto.Photo = fileAttach("attach://" + fileName + "-photo")
+				}
+				newMedias[idx] = paid
+				continue
+			}
+		}
+
+		if media.getMedia() != nil && media.getMedia().NeedsUpload() {
+			media.setUploadMedia("attach://" + fileName)
 		}
 
 		if thumb := media.getThumb(); thumb != nil && thumb.NeedsUpload() {
-			media.setUploadThumb(fmt.Sprintf("attach://file-%d-thumb", idx))
+			media.setUploadThumb("attach://" + fileName + "-thumb")
 		}
 
 		newMedias[idx] = media
@@ -4344,22 +4588,96 @@ func prepareInputMediaForParams(inputMedia []InputMedia) []InputMedia {
 // prepareInputMediaForFiles generates RequestFile objects for media items
 // that need to be uploaded.
 func prepareInputMediaForFiles(inputMedia []InputMedia) []RequestFile {
+	return prepareInputMediaForFilesWithPrefix(inputMedia, "file")
+}
+
+func prepareInputMediaForFilesWithPrefix(inputMedia []InputMedia, prefix string) []RequestFile {
 	files := []RequestFile{}
 
 	for idx, media := range inputMedia {
+		if media == nil {
+			continue
+		}
+
+		fileName := fmt.Sprintf("%s-%d", prefix, idx)
+		if input, ok := media.(*InputMediaLivePhoto); ok {
+			if input.Media != nil && input.Media.NeedsUpload() {
+				files = append(files, RequestFile{
+					Name: fileName,
+					Data: input.Media,
+				})
+			}
+			if input.Photo != nil && input.Photo.NeedsUpload() {
+				files = append(files, RequestFile{
+					Name: fileName + "-photo",
+					Data: input.Photo,
+				})
+			}
+			continue
+		}
+		if paid, ok := media.(*InputPaidMedia); ok {
+			if paid.Photo != nil && paid.Photo.NeedsUpload() {
+				files = append(files, RequestFile{
+					Name: fileName + "-photo",
+					Data: paid.Photo,
+				})
+			}
+			if livePhoto, ok := paid.Media.(*InputMediaLivePhoto); ok {
+				if livePhoto.Media != nil && livePhoto.Media.NeedsUpload() {
+					files = append(files, RequestFile{
+						Name: fileName,
+						Data: livePhoto.Media,
+					})
+				}
+				if livePhoto.Photo != nil && livePhoto.Photo.NeedsUpload() {
+					files = append(files, RequestFile{
+						Name: fileName + "-photo",
+						Data: livePhoto.Photo,
+					})
+				}
+				continue
+			}
+		}
+
 		if media.getMedia() != nil && media.getMedia().NeedsUpload() {
 			files = append(files, RequestFile{
-				Name: fmt.Sprintf("file-%d", idx),
+				Name: fileName,
 				Data: media.getMedia(),
 			})
 		}
 
 		if thumb := media.getThumb(); thumb != nil && thumb.NeedsUpload() {
 			files = append(files, RequestFile{
-				Name: fmt.Sprintf("file-%d-thumb", idx),
+				Name: fileName + "-thumb",
 				Data: thumb,
 			})
 		}
+	}
+
+	return files
+}
+
+func prepareInputPollOptionsForParams(options []InputPollOption) []InputPollOption {
+	prepared := make([]InputPollOption, len(options))
+	copy(prepared, options)
+	for idx := range prepared {
+		if prepared[idx].Media == nil {
+			continue
+		}
+		media := prepareInputMediaForParamsWithPrefix([]InputMedia{prepared[idx].Media}, fmt.Sprintf("poll-option-%d", idx))
+		prepared[idx].Media = media[0]
+	}
+
+	return prepared
+}
+
+func prepareInputPollOptionsForFiles(options []InputPollOption) []RequestFile {
+	files := make([]RequestFile, 0)
+	for idx, option := range options {
+		if option.Media == nil {
+			continue
+		}
+		files = append(files, prepareInputMediaForFilesWithPrefix([]InputMedia{option.Media}, fmt.Sprintf("poll-option-%d", idx))...)
 	}
 
 	return files
@@ -4475,9 +4793,18 @@ func cloneInputMedia(media InputMedia) InputMedia {
 		return ptr(*m)
 	case *InputMediaDocument:
 		return ptr(*m)
+	case *InputMediaLivePhoto:
+		return ptr(*m)
+	case *InputMediaLocation:
+		return ptr(*m)
+	case *InputMediaVenue:
+		return ptr(*m)
+	case *InputMediaSticker:
+		return ptr(*m)
 	case *InputPaidMedia:
 		clone := &InputPaidMedia{
 			Type:              m.Type,
+			Photo:             m.Photo,
 			Thumb:             m.Thumb,
 			Width:             m.Width,
 			Height:            m.Height,
@@ -4500,6 +4827,7 @@ func cloneInputMedia(media InputMedia) InputMedia {
 		if m.Media != nil {
 			clone.Media = &InputPaidMedia{
 				Type:              m.Media.Type,
+				Photo:             m.Media.Photo,
 				Thumb:             m.Media.Thumb,
 				Width:             m.Media.Width,
 				Height:            m.Media.Height,

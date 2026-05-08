@@ -81,6 +81,10 @@ type Update struct {
 	//
 	// optional
 	DeletedBusinessMessages *BusinessMessagesDeleted `json:"deleted_business_messages,omitempty"`
+	// GuestMessage is a new message sent to the bot in guest mode.
+	//
+	// optional
+	GuestMessage *Message `json:"guest_message,omitempty"`
 	// MessageReaction is a reaction to a message was changed by a user.
 	//
 	// optional
@@ -181,6 +185,8 @@ func (u *Update) SentFrom() *User {
 		return u.EditedBusinessMessage.From
 	case u.MessageReaction != nil:
 		return u.MessageReaction.User
+	case u.GuestMessage != nil:
+		return u.GuestMessage.From
 	case u.InlineQuery != nil:
 		return u.InlineQuery.From
 	case u.ChosenInlineResult != nil:
@@ -241,6 +247,8 @@ func (u *Update) FromChat() *Chat {
 		return &u.MessageReaction.Chat
 	case u.MessageReactionCount != nil:
 		return &u.MessageReactionCount.Chat
+	case u.GuestMessage != nil:
+		return &u.GuestMessage.Chat
 	case u.CallbackQuery != nil && u.CallbackQuery.Message != nil:
 		return &u.CallbackQuery.Message.Chat
 	case u.MyChatMember != nil:
@@ -314,6 +322,11 @@ type User struct {
 	//
 	// optional
 	SupportsInlineQueries bool `json:"supports_inline_queries,omitempty"`
+	// SupportsGuestQueries is true, if the bot supports guest queries.
+	// Returned only in getMe.
+	//
+	// optional
+	SupportsGuestQueries bool `json:"supports_guest_queries,omitempty"`
 	// CanConnectToBusiness is true, if the bot can be connected to a
 	// Telegram Business account to receive its messages.
 	// Returned only in getMe.
@@ -655,6 +668,18 @@ type Message struct {
 	//
 	// optional
 	DirectMessagesTopic *DirectMessagesTopic `json:"direct_messages_topic,omitempty"`
+	// GuestQueryID is a unique identifier for the guest query to be answered.
+	//
+	// optional
+	GuestQueryID string `json:"guest_query_id,omitempty"`
+	// GuestBotCallerUser is the user who invoked the bot in guest mode.
+	//
+	// optional
+	GuestBotCallerUser *User `json:"guest_bot_caller_user,omitempty"`
+	// GuestBotCallerChat is the chat on behalf of which the bot was invoked in guest mode.
+	//
+	// optional
+	GuestBotCallerChat *Chat `json:"guest_bot_caller_chat,omitempty"`
 	// From is a sender, empty for messages sent to channels;
 	//
 	// optional
@@ -813,6 +838,10 @@ type Message struct {
 	//
 	// optional
 	Photo []PhotoSize `json:"photo,omitempty"`
+	// LivePhoto message is a live photo, information about the live photo.
+	//
+	// optional
+	LivePhoto *LivePhoto `json:"live_photo,omitempty"`
 	// Sticker message is a sticker, information about the sticker;
 	//
 	// optional
@@ -1385,6 +1414,10 @@ type ExternalReplyInfo struct {
 	//
 	// optional
 	Photo []PhotoSize `json:"photo,omitempty"`
+	// LivePhoto message is a live photo, information about the live photo.
+	//
+	// optional
+	LivePhoto *LivePhoto `json:"live_photo,omitempty"`
 	// Sticker message is a sticker, information about the sticker;
 	//
 	// optional
@@ -1569,6 +1602,32 @@ type PhotoSize struct {
 	// Height photo height
 	Height int `json:"height"`
 	// FileSize file size
+	//
+	// optional
+	FileSize int `json:"file_size,omitempty"`
+}
+
+// LivePhoto represents a live photo.
+type LivePhoto struct {
+	// Photo is available sizes of the static part of the live photo.
+	//
+	// optional
+	Photo []PhotoSize `json:"photo,omitempty"`
+	// FileID identifier for the live photo file, which can be used to download or reuse the file.
+	FileID string `json:"file_id"`
+	// FileUniqueID is the unique identifier for this file, which can't be used to download or reuse the file.
+	FileUniqueID string `json:"file_unique_id"`
+	// Width live photo width.
+	Width int `json:"width"`
+	// Height live photo height.
+	Height int `json:"height"`
+	// Duration of the video part of the live photo in seconds.
+	Duration int `json:"duration"`
+	// MimeType of the file as defined by sender.
+	//
+	// optional
+	MimeType string `json:"mime_type,omitempty"`
+	// FileSize file size.
 	//
 	// optional
 	FileSize int `json:"file_size,omitempty"`
@@ -1777,6 +1836,7 @@ type PaidMediaInfo struct {
 }
 
 // This object describes paid media. Currently, it can be one of
+//   - PaidMediaLivePhoto
 //   - PaidMediaPreview
 //   - PaidMediaPhoto
 //   - PaidMediaVideo
@@ -1807,6 +1867,9 @@ type PaidMedia struct {
 	// PaidMediaVideo only.
 	// The video
 	Video *Video `json:"video,omitempty"`
+	// PaidMediaLivePhoto only.
+	// The live photo
+	LivePhoto *LivePhoto `json:"live_photo,omitempty"`
 }
 
 // Contact represents a phone contact.
@@ -1850,6 +1913,10 @@ type PollOption struct {
 	//
 	// optional
 	TextEntities []MessageEntity `json:"text_entities,omitempty"`
+	// Media is media attached to the option.
+	//
+	// optional
+	Media *PollMedia `json:"media,omitempty"`
 	// VoterCount is the number of users that voted for this option
 	VoterCount int `json:"voter_count"`
 	// AddedByUser is the user who added the option.
@@ -1880,6 +1947,23 @@ type InputPollOption struct {
 	//
 	// optional
 	TextEntities []MessageEntity `json:"text_entities,omitempty"`
+	// Media is media attached to the option.
+	//
+	// optional
+	Media InputMedia `json:"media,omitempty"`
+}
+
+// PollMedia describes media attached to a poll or poll option.
+type PollMedia struct {
+	Animation *Animation  `json:"animation,omitempty"`
+	Audio     *Audio      `json:"audio,omitempty"`
+	Document  *Document   `json:"document,omitempty"`
+	LivePhoto *LivePhoto  `json:"live_photo,omitempty"`
+	Location  *Location   `json:"location,omitempty"`
+	Photo     []PhotoSize `json:"photo,omitempty"`
+	Sticker   *Sticker    `json:"sticker,omitempty"`
+	Venue     *Venue      `json:"venue,omitempty"`
+	Video     *Video      `json:"video,omitempty"`
 }
 
 // PollAnswer represents an answer of a user in a non-anonymous poll.
@@ -1966,6 +2050,22 @@ type Poll struct {
 	//
 	// optional
 	DescriptionEntities []MessageEntity `json:"description_entities,omitempty"`
+	// ExplanationMedia is media attached to the quiz explanation.
+	//
+	// optional
+	ExplanationMedia *PollMedia `json:"explanation_media,omitempty"`
+	// Media is media attached to the poll.
+	//
+	// optional
+	Media *PollMedia `json:"media,omitempty"`
+	// MembersOnly is true if the poll is limited to chat members.
+	//
+	// optional
+	MembersOnly bool `json:"members_only,omitempty"`
+	// CountryCodes contains countries whose users can vote in the poll.
+	//
+	// optional
+	CountryCodes []string `json:"country_codes,omitempty"`
 }
 
 func (p *Poll) UnmarshalJSON(data []byte) error {
@@ -3218,6 +3318,11 @@ type ChatMember struct {
 	//
 	// optional
 	CanSendPolls bool `json:"can_send_polls,omitempty"`
+	// CanReactToMessages restricted only.
+	// True, if the user is allowed to react to messages.
+	//
+	// optional
+	CanReactToMessages bool `json:"can_react_to_messages,omitempty"`
 	// CanSendOtherMessages restricted only.
 	// True, if the user is allowed to send audios, documents,
 	// photos, videos, video notes and voice notes.
@@ -3361,6 +3466,10 @@ type ChatPermissions struct {
 	//
 	// optional
 	CanSendPolls bool `json:"can_send_polls,omitempty"`
+	// CanReactToMessages is true, if the user is allowed to react to messages.
+	//
+	// optional
+	CanReactToMessages bool `json:"can_react_to_messages,omitempty"`
 	// CanSendOtherMessages is true, if the user is allowed to send animations,
 	// games, stickers and use inline bots, implies can_send_media_messages
 	//
@@ -3940,6 +4049,9 @@ func (media *InputPaidMedia) getType() string {
 
 // getMedia returns the media file data
 func (media *InputPaidMedia) getMedia() RequestFileData {
+	if media.Media == nil {
+		return nil
+	}
 	return media.Media.getMedia()
 }
 
@@ -3948,11 +4060,17 @@ func (media *InputPaidMedia) getThumb() RequestFileData {
 	if media.Thumb != nil {
 		return media.Thumb
 	}
+	if media.Media == nil {
+		return nil
+	}
 	return media.Media.getThumb()
 }
 
 // setUploadMedia sets the media to a file attachment reference
 func (media *InputPaidMedia) setUploadMedia(fileRef string) {
+	if media.Media == nil {
+		return
+	}
 	media.Media.setUploadMedia(fileRef)
 }
 
@@ -3963,26 +4081,41 @@ func (media *InputPaidMedia) setUploadThumb(fileRef string) {
 
 // getType returns the type of the input paid media
 func (media *PaidMediaConfig) getType() string {
+	if media.Media == nil {
+		return ""
+	}
 	return media.Media.getType()
 }
 
 // getMedia returns the media file data
 func (media *PaidMediaConfig) getMedia() RequestFileData {
+	if media.Media == nil {
+		return nil
+	}
 	return media.Media.getMedia()
 }
 
 // getThumb returns the thumbnail for the paid media
 func (media *PaidMediaConfig) getThumb() RequestFileData {
+	if media.Media == nil {
+		return nil
+	}
 	return media.Media.getThumb()
 }
 
 // setUploadMedia sets the media to a file attachment reference
 func (media *PaidMediaConfig) setUploadMedia(fileRef string) {
+	if media.Media == nil {
+		return
+	}
 	media.Media.setUploadMedia(fileRef)
 }
 
 // setUploadThumb sets the thumbnail to a file attachment reference
 func (media *PaidMediaConfig) setUploadThumb(fileRef string) {
+	if media.Media == nil {
+		return
+	}
 	media.Media.setUploadThumb(fileRef)
 }
 
@@ -4093,7 +4226,121 @@ type InputMediaDocument struct {
 	DisableContentTypeDetection bool `json:"disable_content_type_detection,omitempty"`
 }
 
+// InputMediaLivePhoto represents a live photo to send.
+type InputMediaLivePhoto struct {
+	Type                  string          `json:"type"`
+	Media                 RequestFileData `json:"media"`
+	Photo                 RequestFileData `json:"photo"`
+	Caption               string          `json:"caption,omitempty"`
+	ParseMode             string          `json:"parse_mode,omitempty"`
+	CaptionEntities       []MessageEntity `json:"caption_entities,omitempty"`
+	ShowCaptionAboveMedia bool            `json:"show_caption_above_media,omitempty"`
+	HasSpoiler            bool            `json:"has_spoiler,omitempty"`
+}
+
+func (media *InputMediaLivePhoto) getType() string {
+	return media.Type
+}
+
+func (media *InputMediaLivePhoto) getMedia() RequestFileData {
+	return media.Media
+}
+
+func (media *InputMediaLivePhoto) getThumb() RequestFileData {
+	return nil
+}
+
+func (media *InputMediaLivePhoto) setUploadMedia(fileRef string) {
+	media.Media = fileAttach(fileRef)
+}
+
+func (media *InputMediaLivePhoto) setUploadThumb(_ string) {}
+
+// InputMediaLocation represents a location to send.
+type InputMediaLocation struct {
+	Type               string  `json:"type"`
+	Latitude           float64 `json:"latitude"`
+	Longitude          float64 `json:"longitude"`
+	HorizontalAccuracy float64 `json:"horizontal_accuracy,omitempty"`
+}
+
+func (media *InputMediaLocation) getType() string {
+	return media.Type
+}
+
+func (media *InputMediaLocation) getMedia() RequestFileData {
+	return nil
+}
+
+func (media *InputMediaLocation) getThumb() RequestFileData {
+	return nil
+}
+
+func (media *InputMediaLocation) setUploadMedia(_ string) {}
+
+func (media *InputMediaLocation) setUploadThumb(_ string) {}
+
+// InputMediaVenue represents a venue to send.
+type InputMediaVenue struct {
+	Type            string  `json:"type"`
+	Latitude        float64 `json:"latitude"`
+	Longitude       float64 `json:"longitude"`
+	Title           string  `json:"title"`
+	Address         string  `json:"address"`
+	FoursquareID    string  `json:"foursquare_id,omitempty"`
+	FoursquareType  string  `json:"foursquare_type,omitempty"`
+	GooglePlaceID   string  `json:"google_place_id,omitempty"`
+	GooglePlaceType string  `json:"google_place_type,omitempty"`
+}
+
+func (media *InputMediaVenue) getType() string {
+	return media.Type
+}
+
+func (media *InputMediaVenue) getMedia() RequestFileData {
+	return nil
+}
+
+func (media *InputMediaVenue) getThumb() RequestFileData {
+	return nil
+}
+
+func (media *InputMediaVenue) setUploadMedia(_ string) {}
+
+func (media *InputMediaVenue) setUploadThumb(_ string) {}
+
+// InputMediaSticker represents a sticker file to send.
+type InputMediaSticker struct {
+	Type  string          `json:"type"`
+	Media RequestFileData `json:"media"`
+	Emoji string          `json:"emoji,omitempty"`
+}
+
+func (media *InputMediaSticker) getType() string {
+	return media.Type
+}
+
+func (media *InputMediaSticker) getMedia() RequestFileData {
+	return media.Media
+}
+
+func (media *InputMediaSticker) getThumb() RequestFileData {
+	return nil
+}
+
+func (media *InputMediaSticker) setUploadMedia(fileRef string) {
+	media.Media = fileAttach(fileRef)
+}
+
+func (media *InputMediaSticker) setUploadThumb(_ string) {}
+
+type (
+	InputPollMedia       = InputMedia
+	InputPollOptionMedia = InputMedia
+)
+
 // This object describes the paid media to be sent. Currently, it can be one of:
+//   - InputPaidMediaLivePhoto
 //   - InputPaidMediaPhoto
 //   - InputPaidMediaVideo
 type InputPaidMedia struct {
@@ -4106,6 +4353,11 @@ type InputPaidMedia struct {
 	// or pass "attach://<file_attach_name>" to upload a new one using multipart/form-data under <file_attach_name> name.
 	// More information on https://core.telegram.org/bots/api#sending-files
 	Media InputMedia `json:"media"`
+	// InputPaidMediaLivePhoto only.
+	// Static photo for the live photo.
+	//
+	// optional
+	Photo RequestFileData `json:"photo,omitempty"`
 	// InputPaidMediaVideo only.
 	// Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side.
 	// The thumbnail should be in JPEG format and less than 200 kB in size.
@@ -4143,6 +4395,73 @@ type InputPaidMedia struct {
 	// InputPaidMediaVideo only.
 	// Pass True if the uploaded video is suitable for streaming
 	SupportsStreaming bool `json:"supports_streaming,omitempty"`
+}
+
+func (media InputPaidMedia) MarshalJSON() ([]byte, error) {
+	type inputPaidMediaJSON struct {
+		Type              string          `json:"type"`
+		Media             RequestFileData `json:"media"`
+		Photo             RequestFileData `json:"photo,omitempty"`
+		Thumb             RequestFileData `json:"thumbnail,omitempty"`
+		Cover             string          `json:"cover,omitempty"`
+		StartTimestamp    int64           `json:"start_timestamp,omitempty"`
+		Width             int64           `json:"width,omitempty"`
+		Height            int64           `json:"height,omitempty"`
+		Duration          int64           `json:"duration,omitempty"`
+		SupportsStreaming bool            `json:"supports_streaming,omitempty"`
+	}
+
+	out := inputPaidMediaJSON{
+		Type:              media.Type,
+		Thumb:             media.Thumb,
+		Photo:             media.Photo,
+		Cover:             media.Cover,
+		StartTimestamp:    media.StartTimestamp,
+		Width:             media.Width,
+		Height:            media.Height,
+		Duration:          media.Duration,
+		SupportsStreaming: media.SupportsStreaming,
+	}
+	if out.Type == "" && media.Media != nil {
+		out.Type = media.Media.getType()
+	}
+
+	switch input := media.Media.(type) {
+	case *InputMediaPhoto:
+		out.Media = input.Media
+	case *InputMediaVideo:
+		out.Media = input.Media
+		if out.Thumb == nil {
+			out.Thumb = input.Thumb
+		}
+		if out.Cover == "" {
+			out.Cover = input.Cover
+		}
+		if out.StartTimestamp == 0 {
+			out.StartTimestamp = input.StartTimestamp
+		}
+		if out.Width == 0 {
+			out.Width = int64(input.Width)
+		}
+		if out.Height == 0 {
+			out.Height = int64(input.Height)
+		}
+		if out.Duration == 0 {
+			out.Duration = int64(input.Duration)
+		}
+		out.SupportsStreaming = out.SupportsStreaming || input.SupportsStreaming
+	case *InputMediaLivePhoto:
+		out.Media = input.Media
+		if input.Photo != nil {
+			out.Photo = input.Photo
+		}
+	default:
+		if media.Media != nil {
+			out.Media = media.Media.getMedia()
+		}
+	}
+
+	return json.Marshal(out)
 }
 
 // Constant values for sticker types
@@ -5333,6 +5652,11 @@ type SentWebAppMessage struct {
 	InlineMessageID string `json:"inline_message_id,omitempty"`
 }
 
+// SentGuestMessage contains information about a message sent in response to a guest query.
+type SentGuestMessage struct {
+	InlineMessageID string `json:"inline_message_id"`
+}
+
 // PreparedInlineMessage describes an inline message to be sent by a user of a Mini App.
 type PreparedInlineMessage struct {
 	// ID is a unique identifier of the prepared message
@@ -5346,6 +5670,12 @@ type PreparedInlineMessage struct {
 type PreparedKeyboardButton struct {
 	// ID is a unique identifier of the prepared keyboard button.
 	ID string `json:"id"`
+}
+
+// BotAccessSettings describes granular access settings of a managed bot.
+type BotAccessSettings struct {
+	IsAccessRestricted bool   `json:"is_access_restricted"`
+	AddedUsers         []User `json:"added_users,omitempty"`
 }
 
 // InputTextMessageContent contains text for displaying
@@ -6474,8 +6804,10 @@ type (
 	MenuButtonCommands                   = MenuButton
 	MenuButtonWebApp                     = MenuButton
 	MenuButtonDefault                    = MenuButton
+	InputPaidMediaLivePhoto              = InputPaidMedia
 	InputPaidMediaPhoto                  = InputPaidMedia
 	InputPaidMediaVideo                  = InputPaidMedia
+	PaidMediaLivePhoto                   = PaidMedia
 	PaidMediaPreview                     = PaidMedia
 	PaidMediaPhoto                       = PaidMedia
 	PaidMediaVideo                       = PaidMedia

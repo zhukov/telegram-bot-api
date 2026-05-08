@@ -3,13 +3,20 @@ package tgbotapi
 var (
 	_ Chattable = SendChecklistConfig{}
 	_ Chattable = EditMessageChecklistConfig{}
+	_ Chattable = SendLivePhotoConfig{}
 	_ Chattable = SendMessageDraftConfig{}
 	_ Chattable = ApproveSuggestedPostConfig{}
 	_ Chattable = DeclineSuggestedPostConfig{}
 	_ Chattable = UserProfileAudiosConfig{}
+	_ Chattable = UserPersonalChatMessagesConfig{}
+	_ Chattable = AnswerGuestQueryConfig{}
+	_ Chattable = DeleteMessageReactionConfig{}
+	_ Chattable = DeleteAllMessageReactionsConfig{}
 	_ Chattable = SetPassportDataErrorsConfig{}
 	_ Chattable = GetManagedBotTokenConfig{}
 	_ Chattable = ReplaceManagedBotTokenConfig{}
+	_ Chattable = GetManagedBotAccessSettingsConfig{}
+	_ Chattable = SetManagedBotAccessSettingsConfig{}
 	_ Chattable = GetMyStarBalanceConfig{}
 	_ Chattable = GetBusinessAccountStarBalanceConfig{}
 	_ Chattable = TransferBusinessAccountStarsConfig{}
@@ -38,6 +45,8 @@ var (
 
 var (
 	_ Fileable = SetMyProfilePhotoConfig{}
+	_ Fileable = SendLivePhotoConfig{}
+	_ Fileable = SendPollConfig{}
 	_ Fileable = SetBusinessAccountProfilePhotoConfig{}
 	_ Fileable = PostStoryConfig{}
 	_ Fileable = EditStoryConfig{}

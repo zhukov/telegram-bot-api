@@ -320,7 +320,7 @@ func (bot *BotAPI) IsMessageToMe(message Message) bool {
 
 func hasFilesNeedingUpload(files []RequestFile) bool {
 	for _, file := range files {
-		if file.Data.NeedsUpload() {
+		if file.Data != nil && file.Data.NeedsUpload() {
 			return true
 		}
 	}
@@ -351,6 +351,9 @@ func (bot *BotAPI) RequestWithContext(ctx context.Context, c Chattable) (*APIRes
 		// However, if there are no files to be uploaded, there's likely things
 		// that need to be turned into params instead.
 		for _, file := range files {
+			if file.Data == nil {
+				continue
+			}
 			params[file.Name] = file.Data.SendData()
 		}
 	}
@@ -370,6 +373,23 @@ func (bot *BotAPI) Send(c Chattable) (Message, error) {
 	err = json.Unmarshal(resp.Result, &message)
 
 	return message, err
+}
+
+func (bot *BotAPI) requestBool(c Chattable) (bool, error) {
+	resp, err := bot.Request(c)
+	if err != nil {
+		return false, err
+	}
+
+	var ok bool
+	err = json.Unmarshal(resp.Result, &ok)
+
+	return ok, err
+}
+
+// SendLivePhoto sends a live photo and returns the resulting message.
+func (bot *BotAPI) SendLivePhoto(config SendLivePhotoConfig) (Message, error) {
+	return bot.Send(config)
 }
 
 // SendMediaGroup sends a media group and returns the resulting messages.
@@ -451,6 +471,19 @@ func (bot *BotAPI) GetUserProfileAudios(config UserProfileAudiosConfig) (UserPro
 	err = json.Unmarshal(resp.Result, &profileAudios)
 
 	return profileAudios, err
+}
+
+// GetUserPersonalChatMessages gets recent messages from the channel pinned to a user's profile.
+func (bot *BotAPI) GetUserPersonalChatMessages(config UserPersonalChatMessagesConfig) ([]Message, error) {
+	resp, err := bot.Request(config)
+	if err != nil {
+		return nil, err
+	}
+
+	var messages []Message
+	err = json.Unmarshal(resp.Result, &messages)
+
+	return messages, err
 }
 
 // GetFile returns a File which can download a file from Telegram.
@@ -706,6 +739,16 @@ func (bot *BotAPI) GetChatMember(config GetChatMemberConfig) (ChatMember, error)
 	return member, err
 }
 
+// DeleteMessageReaction removes a reaction from a message.
+func (bot *BotAPI) DeleteMessageReaction(config DeleteMessageReactionConfig) (bool, error) {
+	return bot.requestBool(config)
+}
+
+// DeleteAllMessageReactions removes all recent reactions from a user or actor chat.
+func (bot *BotAPI) DeleteAllMessageReactions(config DeleteAllMessageReactionsConfig) (bool, error) {
+	return bot.requestBool(config)
+}
+
 // GetGameHighScores allows you to get the high scores for a game.
 func (bot *BotAPI) GetGameHighScores(config GetGameHighScoresConfig) ([]GameHighScore, error) {
 	resp, err := bot.Request(config)
@@ -756,6 +799,24 @@ func (bot *BotAPI) ReplaceManagedBotToken(config ReplaceManagedBotTokenConfig) (
 	err = json.Unmarshal(resp.Result, &token)
 
 	return token, err
+}
+
+// GetManagedBotAccessSettings gets granular access settings for a managed bot.
+func (bot *BotAPI) GetManagedBotAccessSettings(config GetManagedBotAccessSettingsConfig) (BotAccessSettings, error) {
+	resp, err := bot.Request(config)
+	if err != nil {
+		return BotAccessSettings{}, err
+	}
+
+	var settings BotAccessSettings
+	err = json.Unmarshal(resp.Result, &settings)
+
+	return settings, err
+}
+
+// SetManagedBotAccessSettings changes granular access settings for a managed bot.
+func (bot *BotAPI) SetManagedBotAccessSettings(config SetManagedBotAccessSettingsConfig) (bool, error) {
+	return bot.requestBool(config)
 }
 
 // GetMyStarBalance gets the current Telegram Stars balance of the bot.
@@ -924,6 +985,19 @@ func (bot *BotAPI) AnswerWebAppQuery(config AnswerWebAppQueryConfig) (SentWebApp
 
 	err = json.Unmarshal(resp.Result, &sentWebAppMessage)
 	return sentWebAppMessage, err
+}
+
+// AnswerGuestQuery replies to a received guest message.
+func (bot *BotAPI) AnswerGuestQuery(config AnswerGuestQueryConfig) (SentGuestMessage, error) {
+	var sentGuestMessage SentGuestMessage
+
+	resp, err := bot.Request(config)
+	if err != nil {
+		return sentGuestMessage, err
+	}
+
+	err = json.Unmarshal(resp.Result, &sentGuestMessage)
+	return sentGuestMessage, err
 }
 
 // GetMyDefaultAdministratorRights gets the current default administrator rights of the bot.

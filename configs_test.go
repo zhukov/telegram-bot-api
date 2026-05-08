@@ -6,6 +6,163 @@ import (
 	"testing"
 )
 
+func TestAnswerGuestQueryConfigParams(t *testing.T) {
+	result := NewInlineQueryResultArticle("guest-result", "Answer", "Hello")
+	config := NewAnswerGuestQuery("guest-query", result)
+
+	params, err := config.params()
+	if err != nil {
+		t.Fatalf("params failed: %v", err)
+	}
+
+	if params["guest_query_id"] != "guest-query" {
+		t.Fatalf("guest_query_id mismatch: %#v", params)
+	}
+	if !strings.Contains(params["result"], `"type":"article"`) || !strings.Contains(params["result"], `"id":"guest-result"`) {
+		t.Fatalf("result payload mismatch: %#v", params)
+	}
+}
+
+func TestSendLivePhotoConfigUploadSerialization(t *testing.T) {
+	config := NewLivePhoto(1, FilePath("tests/video.mp4"), FilePath("tests/image.jpg"))
+	config.Caption = "live"
+	config.HasSpoiler = true
+
+	params, err := config.params()
+	if err != nil {
+		t.Fatalf("params failed: %v", err)
+	}
+	if params["chat_id"] != "1" || params["caption"] != "live" || params["has_spoiler"] != "true" {
+		t.Fatalf("params mismatch: %#v", params)
+	}
+
+	files := config.files()
+	if len(files) != 2 || files[0].Name != "live_photo" || files[1].Name != "photo" {
+		t.Fatalf("unexpected files payload: %+v", files)
+	}
+}
+
+func TestSendPollConfigBotAPI10MediaSerialization(t *testing.T) {
+	optionMedia := &InputMediaSticker{
+		Type:  "sticker",
+		Media: FilePath("tests/image.jpg"),
+		Emoji: ":)",
+	}
+	explanationMedia := &InputMediaLivePhoto{
+		Type:  "live_photo",
+		Media: FilePath("tests/video.mp4"),
+		Photo: FilePath("tests/image.jpg"),
+	}
+	pollMedia := &InputMediaLocation{
+		Type:      "location",
+		Latitude:  10.5,
+		Longitude: 20.25,
+	}
+	config := SendPollConfig{
+		BaseChat: BaseChat{
+			ChatConfig: ChatConfig{ChatID: 1},
+		},
+		Question:         "q",
+		Options:          []InputPollOption{NewPollOptionWithMedia("a", optionMedia), NewPollOption("b")},
+		ExplanationMedia: explanationMedia,
+		Media:            pollMedia,
+		MembersOnly:      true,
+		CountryCodes:     []string{"US", "PL"},
+	}
+
+	params, err := config.params()
+	if err != nil {
+		t.Fatalf("params failed: %v", err)
+	}
+
+	if !strings.Contains(params["options"], `"media":{"type":"sticker","media":"attach://poll-option-0-0","emoji":":)"}`) {
+		t.Fatalf("options media mismatch: %#v", params["options"])
+	}
+	if !strings.Contains(params["explanation_media"], `"media":"attach://explanation-media-0"`) ||
+		!strings.Contains(params["explanation_media"], `"photo":"attach://explanation-media-0-photo"`) {
+		t.Fatalf("explanation_media mismatch: %#v", params["explanation_media"])
+	}
+	if !strings.Contains(params["media"], `"type":"location"`) {
+		t.Fatalf("poll media mismatch: %#v", params["media"])
+	}
+	if params["members_only"] != "true" || params["country_codes"] != `["US","PL"]` {
+		t.Fatalf("poll limit params mismatch: %#v", params)
+	}
+
+	files := config.files()
+	if len(files) != 3 {
+		t.Fatalf("unexpected files count: %+v", files)
+	}
+	if optionMedia.Media != FilePath("tests/image.jpg") || explanationMedia.Media != FilePath("tests/video.mp4") {
+		t.Fatalf("original media was mutated")
+	}
+}
+
+func TestPaidMediaLivePhotoSerialization(t *testing.T) {
+	livePhoto := NewInputMediaLivePhoto(FilePath("tests/video.mp4"), FilePath("tests/image.jpg"))
+	paid := NewInputPaidMediaLivePhoto(&livePhoto)
+	config := NewPaidMedia(1, 10, &paid)
+
+	params, err := config.params()
+	if err != nil {
+		t.Fatalf("params failed: %v", err)
+	}
+	if !strings.Contains(params["media"], `"type":"live_photo"`) ||
+		!strings.Contains(params["media"], `"media":"attach://file-0"`) ||
+		!strings.Contains(params["media"], `"photo":"attach://file-0-photo"`) {
+		t.Fatalf("paid media payload mismatch: %#v", params["media"])
+	}
+
+	files := config.files()
+	if len(files) != 2 || files[0].Name != "file-0" || files[1].Name != "file-0-photo" {
+		t.Fatalf("unexpected files payload: %+v", files)
+	}
+}
+
+func TestManagedBotAccessSettingsConfigFalseParam(t *testing.T) {
+	config := NewSetManagedBotAccessSettings(42, false, 1, 2)
+
+	params, err := config.params()
+	if err != nil {
+		t.Fatalf("params failed: %v", err)
+	}
+	if params["user_id"] != "42" || params["is_access_restricted"] != "false" || params["added_user_ids"] != "[1,2]" {
+		t.Fatalf("managed access params mismatch: %#v", params)
+	}
+}
+
+func TestDeleteReactionConfigsAndReturnBotsParams(t *testing.T) {
+	deleteReaction := NewDeleteMessageReaction(1, 2)
+	deleteReaction.UserID = 3
+	params, err := deleteReaction.params()
+	if err != nil {
+		t.Fatalf("delete reaction params failed: %v", err)
+	}
+	if params["chat_id"] != "1" || params["message_id"] != "2" || params["user_id"] != "3" {
+		t.Fatalf("delete reaction params mismatch: %#v", params)
+	}
+
+	deleteAll := NewDeleteAllMessageReactions(1)
+	deleteAll.ActorChatID = 4
+	params, err = deleteAll.params()
+	if err != nil {
+		t.Fatalf("delete all reactions params failed: %v", err)
+	}
+	if params["chat_id"] != "1" || params["actor_chat_id"] != "4" {
+		t.Fatalf("delete all reactions params mismatch: %#v", params)
+	}
+
+	admins := NewChatAdministrators(1)
+	admins.ReturnBots = true
+	params, err = admins.params()
+	if err != nil {
+		t.Fatalf("chat administrators params failed: %v", err)
+	}
+	if params["return_bots"] != "true" {
+		t.Fatalf("return_bots mismatch: %#v", params)
+	}
+}
+
 func TestSendPollConfigCloseDate64BitParam(t *testing.T) {
 	config := SendPollConfig{
 		BaseChat: BaseChat{
