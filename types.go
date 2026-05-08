@@ -672,11 +672,11 @@ type Message struct {
 	//
 	// optional
 	GuestQueryID string `json:"guest_query_id,omitempty"`
-	// GuestBotCallerUser is the user who invoked the bot in guest mode.
+	// GuestBotCallerUser is the user whose original message triggered a guest bot's response.
 	//
 	// optional
 	GuestBotCallerUser *User `json:"guest_bot_caller_user,omitempty"`
-	// GuestBotCallerChat is the chat on behalf of which the bot was invoked in guest mode.
+	// GuestBotCallerChat is the chat whose original message triggered a guest bot's response.
 	//
 	// optional
 	GuestBotCallerChat *Chat `json:"guest_bot_caller_chat,omitempty"`
