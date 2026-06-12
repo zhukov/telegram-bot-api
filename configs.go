@@ -383,6 +383,52 @@ func (config SendMessageDraftConfig) params() (Params, error) {
 	return params, err
 }
 
+// SendRichMessageConfig allows you to send a rich message.
+type SendRichMessageConfig struct {
+	BaseChat
+	RichMessage InputRichMessage
+}
+
+func (config SendRichMessageConfig) method() string {
+	return "sendRichMessage"
+}
+
+func (config SendRichMessageConfig) params() (Params, error) {
+	params, err := config.BaseChat.params()
+	if err != nil {
+		return params, err
+	}
+
+	err = params.AddInterface("rich_message", config.RichMessage)
+
+	return params, err
+}
+
+// SendRichMessageDraftConfig allows you to stream a partial rich message.
+type SendRichMessageDraftConfig struct {
+	ChatConfig
+	MessageThreadID int
+	DraftID         int
+	RichMessage     InputRichMessage
+}
+
+func (config SendRichMessageDraftConfig) method() string {
+	return "sendRichMessageDraft"
+}
+
+func (config SendRichMessageDraftConfig) params() (Params, error) {
+	params, err := config.ChatConfig.params()
+	if err != nil {
+		return params, err
+	}
+
+	params.AddNonZero("message_thread_id", config.MessageThreadID)
+	params.AddNonZero("draft_id", config.DraftID)
+	err = params.AddInterface("rich_message", config.RichMessage)
+
+	return params, err
+}
+
 // ForwardConfig contains information about a ForwardMessage request.
 type ForwardConfig struct {
 	BaseChat
@@ -1845,6 +1891,44 @@ func (config AnswerGuestQueryConfig) params() (Params, error) {
 	err := params.AddInterface("result", config.Result)
 
 	return params, err
+}
+
+// AnswerChatJoinRequestQueryConfig is used to process a chat join request query.
+type AnswerChatJoinRequestQueryConfig struct {
+	ChatJoinRequestQueryID string
+	Result                 string
+}
+
+func (config AnswerChatJoinRequestQueryConfig) method() string {
+	return "answerChatJoinRequestQuery"
+}
+
+func (config AnswerChatJoinRequestQueryConfig) params() (Params, error) {
+	params := make(Params)
+
+	params["chat_join_request_query_id"] = config.ChatJoinRequestQueryID
+	params["result"] = config.Result
+
+	return params, nil
+}
+
+// SendChatJoinRequestWebAppConfig opens a Mini App for a chat join request query.
+type SendChatJoinRequestWebAppConfig struct {
+	ChatJoinRequestQueryID string
+	WebAppURL              string
+}
+
+func (config SendChatJoinRequestWebAppConfig) method() string {
+	return "sendChatJoinRequestWebApp"
+}
+
+func (config SendChatJoinRequestWebAppConfig) params() (Params, error) {
+	params := make(Params)
+
+	params["chat_join_request_query_id"] = config.ChatJoinRequestQueryID
+	params["web_app_url"] = config.WebAppURL
+
+	return params, nil
 }
 
 // SavePreparedInlineMessageConfig stores a message that can be sent by a user of a Mini App.
@@ -4798,6 +4882,8 @@ func cloneInputMedia(media InputMedia) InputMedia {
 	case *InputMediaLocation:
 		return ptr(*m)
 	case *InputMediaVenue:
+		return ptr(*m)
+	case *InputMediaLink:
 		return ptr(*m)
 	case *InputMediaSticker:
 		return ptr(*m)

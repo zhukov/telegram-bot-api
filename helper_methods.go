@@ -28,6 +28,50 @@ func NewMessage(chatID int64, text string) MessageConfig {
 	}
 }
 
+// NewInputRichMessageHTML creates a new HTML rich message input.
+func NewInputRichMessageHTML(html string) InputRichMessage {
+	return InputRichMessage{
+		HTML: html,
+	}
+}
+
+// NewInputRichMessageMarkdown creates a new Markdown rich message input.
+func NewInputRichMessageMarkdown(markdown string) InputRichMessage {
+	return InputRichMessage{
+		Markdown: markdown,
+	}
+}
+
+// NewInputRichMessageContent creates new rich message content for inline query results.
+func NewInputRichMessageContent(richMessage InputRichMessage) InputRichMessageContent {
+	return InputRichMessageContent{
+		RichMessage: richMessage,
+	}
+}
+
+// NewSendRichMessage creates a new rich message.
+func NewSendRichMessage(chatID int64, richMessage InputRichMessage) SendRichMessageConfig {
+	return SendRichMessageConfig{
+		BaseChat: BaseChat{
+			ChatConfig: ChatConfig{
+				ChatID: chatID,
+			},
+		},
+		RichMessage: richMessage,
+	}
+}
+
+// NewSendRichMessageDraft creates a new rich message draft.
+func NewSendRichMessageDraft(chatID int64, draftID int, richMessage InputRichMessage) SendRichMessageDraftConfig {
+	return SendRichMessageDraftConfig{
+		ChatConfig: ChatConfig{
+			ChatID: chatID,
+		},
+		DraftID:     draftID,
+		RichMessage: richMessage,
+	}
+}
+
 // NewDeleteMessage creates a request to delete a message.
 func NewDeleteMessage(chatID int64, messageID int) DeleteMessageConfig {
 	return DeleteMessageConfig{
@@ -358,6 +402,14 @@ func NewInputMediaVenue(title, address string, latitude, longitude float64) Inpu
 		Longitude: longitude,
 		Title:     title,
 		Address:   address,
+	}
+}
+
+// NewInputMediaLink creates a new InputMediaLink.
+func NewInputMediaLink(url string) *InputMediaLink {
+	return &InputMediaLink{
+		Type: "link",
+		URL:  url,
 	}
 }
 
@@ -721,6 +773,22 @@ func NewAnswerGuestQuery(guestQueryID string, result InlineQueryResult) AnswerGu
 	return AnswerGuestQueryConfig{
 		GuestQueryID: guestQueryID,
 		Result:       result,
+	}
+}
+
+// NewAnswerChatJoinRequestQuery creates a chat join request query answer.
+func NewAnswerChatJoinRequestQuery(chatJoinRequestQueryID, result string) AnswerChatJoinRequestQueryConfig {
+	return AnswerChatJoinRequestQueryConfig{
+		ChatJoinRequestQueryID: chatJoinRequestQueryID,
+		Result:                 result,
+	}
+}
+
+// NewSendChatJoinRequestWebApp creates a chat join request Mini App response.
+func NewSendChatJoinRequestWebApp(chatJoinRequestQueryID, webAppURL string) SendChatJoinRequestWebAppConfig {
+	return SendChatJoinRequestWebAppConfig{
+		ChatJoinRequestQueryID: chatJoinRequestQueryID,
+		WebAppURL:              webAppURL,
 	}
 }
 

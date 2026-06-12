@@ -392,6 +392,16 @@ func (bot *BotAPI) SendLivePhoto(config SendLivePhotoConfig) (Message, error) {
 	return bot.Send(config)
 }
 
+// SendRichMessage sends a rich message and returns the resulting message.
+func (bot *BotAPI) SendRichMessage(config SendRichMessageConfig) (Message, error) {
+	return bot.Send(config)
+}
+
+// SendRichMessageDraft streams a partial rich message draft.
+func (bot *BotAPI) SendRichMessageDraft(config SendRichMessageDraftConfig) (bool, error) {
+	return bot.requestBool(config)
+}
+
 // SendMediaGroup sends a media group and returns the resulting messages.
 func (bot *BotAPI) SendMediaGroup(config MediaGroupConfig) ([]Message, error) {
 	resp, err := bot.Request(config)
@@ -998,6 +1008,16 @@ func (bot *BotAPI) AnswerGuestQuery(config AnswerGuestQueryConfig) (SentGuestMes
 
 	err = json.Unmarshal(resp.Result, &sentGuestMessage)
 	return sentGuestMessage, err
+}
+
+// AnswerChatJoinRequestQuery processes a received chat join request query.
+func (bot *BotAPI) AnswerChatJoinRequestQuery(config AnswerChatJoinRequestQueryConfig) (bool, error) {
+	return bot.requestBool(config)
+}
+
+// SendChatJoinRequestWebApp processes a chat join request query by showing a Mini App.
+func (bot *BotAPI) SendChatJoinRequestWebApp(config SendChatJoinRequestWebAppConfig) (bool, error) {
+	return bot.requestBool(config)
 }
 
 // GetMyDefaultAdministratorRights gets the current default administrator rights of the bot.

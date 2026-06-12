@@ -5,11 +5,15 @@ var (
 	_ Chattable = EditMessageChecklistConfig{}
 	_ Chattable = SendLivePhotoConfig{}
 	_ Chattable = SendMessageDraftConfig{}
+	_ Chattable = SendRichMessageConfig{}
+	_ Chattable = SendRichMessageDraftConfig{}
 	_ Chattable = ApproveSuggestedPostConfig{}
 	_ Chattable = DeclineSuggestedPostConfig{}
 	_ Chattable = UserProfileAudiosConfig{}
 	_ Chattable = UserPersonalChatMessagesConfig{}
 	_ Chattable = AnswerGuestQueryConfig{}
+	_ Chattable = AnswerChatJoinRequestQueryConfig{}
+	_ Chattable = SendChatJoinRequestWebAppConfig{}
 	_ Chattable = DeleteMessageReactionConfig{}
 	_ Chattable = DeleteAllMessageReactionsConfig{}
 	_ Chattable = SetPassportDataErrorsConfig{}
@@ -60,4 +64,5 @@ var (
 	_ InlineQueryResultMpeg4Gif
 	_ InlineQueryResultCachedMpeg4Gif
 	_ TransactionPartnerTelegramApi
+	_ InputMedia = (*InputMediaLink)(nil)
 )

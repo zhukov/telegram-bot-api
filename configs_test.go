@@ -23,6 +23,110 @@ func TestAnswerGuestQueryConfigParams(t *testing.T) {
 	}
 }
 
+func TestAnswerChatJoinRequestQueryConfigParams(t *testing.T) {
+	config := NewAnswerChatJoinRequestQuery("join-query", "approve")
+
+	params, err := config.params()
+	if err != nil {
+		t.Fatalf("params failed: %v", err)
+	}
+
+	if params["chat_join_request_query_id"] != "join-query" {
+		t.Fatalf("chat_join_request_query_id mismatch: %#v", params)
+	}
+	if params["result"] != "approve" {
+		t.Fatalf("result mismatch: %#v", params)
+	}
+}
+
+func TestSendChatJoinRequestWebAppConfigParams(t *testing.T) {
+	config := NewSendChatJoinRequestWebApp("join-query", "https://example.com/app")
+
+	params, err := config.params()
+	if err != nil {
+		t.Fatalf("params failed: %v", err)
+	}
+
+	if params["chat_join_request_query_id"] != "join-query" {
+		t.Fatalf("chat_join_request_query_id mismatch: %#v", params)
+	}
+	if params["web_app_url"] != "https://example.com/app" {
+		t.Fatalf("web_app_url mismatch: %#v", params)
+	}
+}
+
+func TestSendRichMessageConfigParams(t *testing.T) {
+	config := NewSendRichMessage(123, NewInputRichMessageHTML("<p>Hello</p>"))
+	config.MessageThreadID = 456
+	config.DirectMessagesTopicID = 789
+	config.AllowPaidBroadcast = true
+	config.SuggestedPostParameters = &SuggestedPostParameters{Price: &SuggestedPostPrice{Currency: "XTR", Amount: 1}}
+
+	params, err := config.params()
+	if err != nil {
+		t.Fatalf("params failed: %v", err)
+	}
+
+	if params["chat_id"] != "123" {
+		t.Fatalf("chat_id mismatch: %#v", params)
+	}
+	if params["message_thread_id"] != "456" || params["direct_messages_topic_id"] != "789" {
+		t.Fatalf("thread params mismatch: %#v", params)
+	}
+	if params["allow_paid_broadcast"] != "true" {
+		t.Fatalf("allow_paid_broadcast mismatch: %#v", params)
+	}
+	if !strings.Contains(params["rich_message"], `"html":"\u003cp\u003eHello\u003c/p\u003e"`) {
+		t.Fatalf("rich_message mismatch: %#v", params)
+	}
+	if !strings.Contains(params["suggested_post_parameters"], `"price":{"currency":"XTR","amount":1}`) {
+		t.Fatalf("suggested_post_parameters mismatch: %#v", params)
+	}
+}
+
+func TestSendRichMessageDraftConfigParams(t *testing.T) {
+	config := NewSendRichMessageDraft(123, 456, NewInputRichMessageMarkdown("**Hello**"))
+	config.MessageThreadID = 789
+
+	params, err := config.params()
+	if err != nil {
+		t.Fatalf("params failed: %v", err)
+	}
+
+	if params["chat_id"] != "123" {
+		t.Fatalf("chat_id mismatch: %#v", params)
+	}
+	if params["draft_id"] != "456" || params["message_thread_id"] != "789" {
+		t.Fatalf("draft params mismatch: %#v", params)
+	}
+	if !strings.Contains(params["rich_message"], `"markdown":"**Hello**"`) {
+		t.Fatalf("rich_message mismatch: %#v", params)
+	}
+}
+
+func TestInputMediaLinkSerialization(t *testing.T) {
+	option := NewPollOptionWithMedia("docs", NewInputMediaLink("https://core.telegram.org/bots/api"))
+	config := SendPollConfig{
+		BaseChat: BaseChat{
+			ChatConfig: ChatConfig{ChatID: 1},
+		},
+		Question: "q",
+		Options:  []InputPollOption{option},
+	}
+
+	params, err := config.params()
+	if err != nil {
+		t.Fatalf("params failed: %v", err)
+	}
+
+	if !strings.Contains(params["options"], `"media":{"type":"link","url":"https://core.telegram.org/bots/api"}`) {
+		t.Fatalf("options media mismatch: %#v", params["options"])
+	}
+	if files := config.files(); len(files) != 0 {
+		t.Fatalf("unexpected files for link media: %+v", files)
+	}
+}
+
 func TestSendLivePhotoConfigUploadSerialization(t *testing.T) {
 	config := NewLivePhoto(1, FilePath("tests/video.mp4"), FilePath("tests/image.jpg"))
 	config.Caption = "live"
