@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
@@ -29,7 +30,10 @@ type BotAPI struct {
 	Self   User       `json:"-"`
 	Client HTTPClient `json:"-"`
 
-	apiEndpoint string
+	apiEndpoint     string
+	fileEndpoint    string
+	logger          *slog.Logger
+	loggingDisabled bool
 
 	stoppers []context.CancelFunc
 	mu       sync.RWMutex
@@ -39,7 +43,7 @@ type BotAPI struct {
 //
 // It requires a token, provided by @BotFather on Telegram.
 func NewBotAPI(token string) (*BotAPI, error) {
-	return NewBotAPIWithClient(token, APIEndpoint, &http.Client{})
+	return NewBotAPIWithOptions(token)
 }
 
 // NewBotAPIWithAPIEndpoint creates a new BotAPI instance
@@ -47,7 +51,7 @@ func NewBotAPI(token string) (*BotAPI, error) {
 //
 // It requires a token, provided by @BotFather on Telegram and API endpoint.
 func NewBotAPIWithAPIEndpoint(token, apiEndpoint string) (*BotAPI, error) {
-	return NewBotAPIWithClient(token, apiEndpoint, &http.Client{})
+	return NewBotAPIWithOptions(token, WithAPIEndpoint(apiEndpoint))
 }
 
 // NewBotAPIWithClient creates a new BotAPI instance
@@ -55,12 +59,29 @@ func NewBotAPIWithAPIEndpoint(token, apiEndpoint string) (*BotAPI, error) {
 //
 // It requires a token, provided by @BotFather on Telegram and API endpoint.
 func NewBotAPIWithClient(token, apiEndpoint string, client HTTPClient) (*BotAPI, error) {
-	bot := &BotAPI{
-		Token:  token,
-		Client: client,
-		Buffer: 100,
+	return NewBotAPIWithOptions(token, WithAPIEndpoint(apiEndpoint), WithHTTPClient(client))
+}
 
-		apiEndpoint: apiEndpoint,
+// NewBotAPIWithOptions creates a new BotAPI instance using optional configuration.
+//
+// It requires a token, provided by @BotFather on Telegram.
+func NewBotAPIWithOptions(token string, options ...BotAPIOption) (*BotAPI, error) {
+	config := defaultBotAPIConfig()
+	for _, option := range options {
+		if err := option(&config); err != nil {
+			return nil, err
+		}
+	}
+
+	bot := &BotAPI{
+		Token:           token,
+		Debug:           config.debug,
+		Buffer:          config.buffer,
+		Client:          config.client,
+		apiEndpoint:     config.apiEndpoint,
+		fileEndpoint:    config.fileEndpoint,
+		logger:          config.logger,
+		loggingDisabled: config.loggingDisabled,
 	}
 
 	self, err := bot.GetMe()
@@ -78,7 +99,12 @@ func (bot *BotAPI) SetAPIEndpoint(apiEndpoint string) {
 	bot.apiEndpoint = apiEndpoint
 }
 
-// SetAPIEndpoint changes the Telegram Bot API update chan buffer used by the instance.
+// SetFileEndpoint changes the Telegram file download endpoint used by the instance.
+func (bot *BotAPI) SetFileEndpoint(fileEndpoint string) {
+	bot.fileEndpoint = fileEndpoint
+}
+
+// SetUpdatesBuffer changes the Telegram Bot API update chan buffer used by the instance.
 func (bot *BotAPI) SetUpdatesBuffer(capacity int) {
 	bot.Buffer = capacity
 }
@@ -109,13 +135,7 @@ func (bot *BotAPI) MakeRequestWithContext(ctx context.Context, endpoint string, 
 func (bot *BotAPI) executeRequest(ctx context.Context, endpoint string, payload requestPayload, debugInfo requestDebug) (*APIResponse, error) {
 	defer payload.close()
 
-	if bot.Debug {
-		if debugInfo.fileCount > 0 {
-			log.Printf("Endpoint: %s, params: %v, with %d files\n", endpoint, debugInfo.params, debugInfo.fileCount)
-		} else {
-			log.Printf("Endpoint: %s, params: %v\n", endpoint, debugInfo.params)
-		}
-	}
+	bot.logRequestDebug(ctx, endpoint, debugInfo)
 
 	method := fmt.Sprintf(bot.apiEndpoint, bot.Token, endpoint)
 
@@ -139,9 +159,7 @@ func (bot *BotAPI) executeRequest(ctx context.Context, endpoint string, payload 
 		return &apiResp, err
 	}
 
-	if bot.Debug {
-		log.Printf("Endpoint: %s, response: %s\n", endpoint, string(bytes))
-	}
+	bot.logResponseDebug(ctx, endpoint, string(bytes))
 
 	if !apiResp.Ok {
 		var parameters ResponseParameters
@@ -164,7 +182,7 @@ func (bot *BotAPI) executeRequest(ctx context.Context, endpoint string, payload 
 // If debug disabled, just decode http.Response.Body stream to APIResponse struct
 // for efficient memory usage
 func (bot *BotAPI) decodeAPIResponse(responseBody io.Reader, resp *APIResponse) ([]byte, error) {
-	if !bot.Debug {
+	if !bot.debugLoggingEnabled() {
 		dec := json.NewDecoder(responseBody)
 		err := dec.Decode(resp)
 		return nil, err
@@ -210,7 +228,12 @@ func (bot *BotAPI) GetFileDirectURL(fileID string) (string, error) {
 		return "", err
 	}
 
-	return file.Link(bot.Token), nil
+	return bot.FileURL(file), nil
+}
+
+// FileURL returns a full path to the download URL for a File using this bot's file endpoint.
+func (bot *BotAPI) FileURL(file File) string {
+	return fmt.Sprintf(bot.fileEndpoint, bot.Token, file.FilePath)
 }
 
 // GetMe fetches the currently authenticated bot.
@@ -476,8 +499,7 @@ func (bot *BotAPI) GetUpdatesChan(config UpdateConfig) UpdatesChannel {
 			updates, err := bot.GetUpdatesWithContext(ctx, config)
 			if err != nil {
 				if ctx.Err() == nil {
-					log.Println(err)
-					log.Println("Failed to get updates, retrying in 3 seconds...")
+					bot.logUpdateError(ctx, err)
 					time.Sleep(time.Second * 3)
 				}
 				continue
@@ -500,9 +522,7 @@ func (bot *BotAPI) StopReceivingUpdates() {
 	bot.mu.Lock()
 	defer bot.mu.Unlock()
 
-	if bot.Debug {
-		log.Println("Stopping the update receiver routine...")
-	}
+	bot.logDebug(context.Background(), "Stopping the update receiver routine...")
 	for _, stopper := range bot.stoppers {
 		stopper()
 	}

@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
+	"log/slog"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -38,8 +40,51 @@ type fakeHTTPClient struct {
 	do func(*http.Request) (*http.Response, error)
 }
 
+type recordingBotLogger struct {
+	entries []string
+}
+
+type panicBotLogger struct{}
+
+type recordingSlogHandler struct {
+	records *[]slog.Record
+}
+
 func (c fakeHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	return c.do(req)
+}
+
+func (l *recordingBotLogger) Println(v ...any) {
+	l.entries = append(l.entries, fmt.Sprintln(v...))
+}
+
+func (l *recordingBotLogger) Printf(format string, v ...any) {
+	l.entries = append(l.entries, fmt.Sprintf(format, v...))
+}
+
+func (panicBotLogger) Println(v ...any) {
+	panic(fmt.Sprintln(v...))
+}
+
+func (panicBotLogger) Printf(format string, v ...any) {
+	panic(fmt.Sprintf(format, v...))
+}
+
+func (h recordingSlogHandler) Enabled(context.Context, slog.Level) bool {
+	return true
+}
+
+func (h recordingSlogHandler) Handle(_ context.Context, record slog.Record) error {
+	*h.records = append(*h.records, record.Clone())
+	return nil
+}
+
+func (h recordingSlogHandler) WithAttrs([]slog.Attr) slog.Handler {
+	return h
+}
+
+func (h recordingSlogHandler) WithGroup(string) slog.Handler {
+	return h
 }
 
 func newFakeBot(client HTTPClient) *BotAPI {
@@ -47,6 +92,13 @@ func newFakeBot(client HTTPClient) *BotAPI {
 		Token:       "token",
 		Client:      client,
 		apiEndpoint: "https://example.com/bot%s/%s",
+	}
+}
+
+func okGetMeResponse() *http.Response {
+	return &http.Response{
+		StatusCode: http.StatusOK,
+		Body:       io.NopCloser(strings.NewReader(`{"ok":true,"result":{"id":123,"is_bot":true,"first_name":"Test","username":"test_bot"}}`)),
 	}
 }
 
@@ -63,6 +115,153 @@ func (t testLogger) Println(v ...any) {
 
 func (t testLogger) Printf(format string, v ...any) {
 	t.t.Logf(format, v...)
+}
+
+func TestNewBotAPIWithOptionsConfiguresBot(t *testing.T) {
+	var requests []string
+	client := fakeHTTPClient{
+		do: func(req *http.Request) (*http.Response, error) {
+			requests = append(requests, req.URL.String())
+			return okGetMeResponse(), nil
+		},
+	}
+
+	bot, err := NewBotAPIWithOptions(
+		"token",
+		WithAPIEndpoint("https://api.example/bot%s/%s"),
+		WithFileEndpoint("https://files.example/file/bot%s/%s"),
+		WithHTTPClient(client),
+		WithDebug(true),
+		WithUpdatesBuffer(42),
+	)
+	if err != nil {
+		t.Fatalf("create bot: %v", err)
+	}
+
+	if len(requests) != 1 || requests[0] != "https://api.example/bottoken/getMe" {
+		t.Fatalf("unexpected constructor requests: %#v", requests)
+	}
+	if bot.Self.UserName != "test_bot" {
+		t.Fatalf("unexpected self user: %+v", bot.Self)
+	}
+	if !bot.Debug {
+		t.Fatalf("expected debug to be enabled")
+	}
+	if bot.Buffer != 42 {
+		t.Fatalf("expected buffer 42, got %d", bot.Buffer)
+	}
+	if got := bot.FileURL(File{FilePath: "docs/file.txt"}); got != "https://files.example/file/bottoken/docs/file.txt" {
+		t.Fatalf("unexpected file URL: %q", got)
+	}
+}
+
+func TestGetFileDirectURLUsesBotFileEndpoint(t *testing.T) {
+	client := fakeHTTPClient{
+		do: func(req *http.Request) (*http.Response, error) {
+			switch {
+			case strings.HasSuffix(req.URL.Path, "/getMe"):
+				return okGetMeResponse(), nil
+			case strings.HasSuffix(req.URL.Path, "/getFile"):
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       io.NopCloser(strings.NewReader(`{"ok":true,"result":{"file_id":"file-id","file_path":"photos/file.jpg"}}`)),
+				}, nil
+			default:
+				t.Fatalf("unexpected request URL: %s", req.URL.String())
+				return nil, nil
+			}
+		},
+	}
+	bot, err := NewBotAPIWithOptions(
+		"token",
+		WithAPIEndpoint("https://api.example/bot%s/%s"),
+		WithFileEndpoint("https://files.example/file/bot%s/%s"),
+		WithHTTPClient(client),
+	)
+	if err != nil {
+		t.Fatalf("create bot: %v", err)
+	}
+
+	link, err := bot.GetFileDirectURL("file-id")
+	if err != nil {
+		t.Fatalf("get file URL: %v", err)
+	}
+	if link != "https://files.example/file/bottoken/photos/file.jpg" {
+		t.Fatalf("unexpected file URL: %q", link)
+	}
+
+	if got := (&File{FilePath: "photos/file.jpg"}).Link("token"); got != "https://api.telegram.org/file/bottoken/photos/file.jpg" {
+		t.Fatalf("legacy File.Link changed: %q", got)
+	}
+}
+
+func TestBotUsesInstanceSlogLoggerForDebug(t *testing.T) {
+	previousLogger := log
+	log = panicBotLogger{}
+	t.Cleanup(func() {
+		log = previousLogger
+	})
+
+	var records []slog.Record
+	_, err := NewBotAPIWithOptions(
+		"token",
+		WithAPIEndpoint("https://api.example/bot%s/%s"),
+		WithHTTPClient(fakeHTTPClient{do: func(*http.Request) (*http.Response, error) {
+			return okGetMeResponse(), nil
+		}}),
+		WithDebug(true),
+		WithLogger(slog.New(recordingSlogHandler{records: &records})),
+	)
+	if err != nil {
+		t.Fatalf("create bot: %v", err)
+	}
+	if len(records) == 0 {
+		t.Fatalf("expected slog records")
+	}
+}
+
+func TestBotCanDisableLogging(t *testing.T) {
+	previousLogger := log
+	log = panicBotLogger{}
+	t.Cleanup(func() {
+		log = previousLogger
+	})
+
+	bot, err := NewBotAPIWithOptions(
+		"token",
+		WithAPIEndpoint("https://api.example/bot%s/%s"),
+		WithHTTPClient(fakeHTTPClient{do: func(*http.Request) (*http.Response, error) {
+			return okGetMeResponse(), nil
+		}}),
+		WithDebug(true),
+		WithLoggingDisabled(),
+	)
+	if err != nil {
+		t.Fatalf("create bot: %v", err)
+	}
+
+	bot.StopReceivingUpdates()
+}
+
+func TestBotUsesLegacyGlobalLoggerFallback(t *testing.T) {
+	previousLogger := log
+	logger := &recordingBotLogger{}
+	log = logger
+	t.Cleanup(func() {
+		log = previousLogger
+	})
+
+	bot := newFakeBot(fakeHTTPClient{do: func(*http.Request) (*http.Response, error) {
+		return okAPIResponse(), nil
+	}})
+	bot.Debug = true
+
+	if _, err := bot.MakeRequest("getMe", nil); err != nil {
+		t.Fatalf("make request: %v", err)
+	}
+	if len(logger.entries) == 0 {
+		t.Fatalf("expected legacy logger entries")
+	}
 }
 
 func TestRequestWithContextCarriesContextForUploads(t *testing.T) {
