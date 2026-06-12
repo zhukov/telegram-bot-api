@@ -591,19 +591,10 @@ func (config PhotoConfig) method() string {
 }
 
 func (config PhotoConfig) files() []RequestFile {
-	files := []RequestFile{{
-		Name: "photo",
-		Data: config.File,
-	}}
-
-	if config.Thumb != nil {
-		files = append(files, RequestFile{
-			Name: "thumbnail",
-			Data: config.Thumb,
-		})
-	}
-
-	return files
+	return requestFiles(
+		requestFile("photo", config.File),
+		requestFile("thumbnail", config.Thumb),
+	)
 }
 
 // SendLivePhotoConfig contains information about a sendLivePhoto request.
@@ -645,21 +636,10 @@ func (config SendLivePhotoConfig) method() string {
 }
 
 func (config SendLivePhotoConfig) files() []RequestFile {
-	files := make([]RequestFile, 0, 2)
-	if config.LivePhoto != nil {
-		files = append(files, RequestFile{
-			Name: "live_photo",
-			Data: config.LivePhoto,
-		})
-	}
-	if config.Photo != nil {
-		files = append(files, RequestFile{
-			Name: "photo",
-			Data: config.Photo,
-		})
-	}
-
-	return files
+	return requestFiles(
+		requestFile("live_photo", config.LivePhoto),
+		requestFile("photo", config.Photo),
+	)
 }
 
 // AudioConfig contains information about a SendAudio request.
@@ -695,19 +675,10 @@ func (config AudioConfig) method() string {
 }
 
 func (config AudioConfig) files() []RequestFile {
-	files := []RequestFile{{
-		Name: "audio",
-		Data: config.File,
-	}}
-
-	if config.Thumb != nil {
-		files = append(files, RequestFile{
-			Name: "thumbnail",
-			Data: config.Thumb,
-		})
-	}
-
-	return files
+	return requestFiles(
+		requestFile("audio", config.File),
+		requestFile("thumbnail", config.Thumb),
+	)
 }
 
 // DocumentConfig contains information about a SendDocument request.
@@ -742,19 +713,10 @@ func (config DocumentConfig) method() string {
 }
 
 func (config DocumentConfig) files() []RequestFile {
-	files := []RequestFile{{
-		Name: "document",
-		Data: config.File,
-	}}
-
-	if config.Thumb != nil {
-		files = append(files, RequestFile{
-			Name: "thumbnail",
-			Data: config.Thumb,
-		})
-	}
-
-	return files
+	return requestFiles(
+		requestFile("document", config.File),
+		requestFile("thumbnail", config.Thumb),
+	)
 }
 
 // StickerConfig contains information about a SendSticker request.
@@ -778,10 +740,7 @@ func (config StickerConfig) method() string {
 }
 
 func (config StickerConfig) files() []RequestFile {
-	return []RequestFile{{
-		Name: "sticker",
-		Data: config.File,
-	}}
+	return requestFiles(requestFile("sticker", config.File))
 }
 
 // VideoConfig contains information about a SendVideo request.
@@ -830,25 +789,11 @@ func (config VideoConfig) method() string {
 }
 
 func (config VideoConfig) files() []RequestFile {
-	files := []RequestFile{{
-		Name: "video",
-		Data: config.File,
-	}}
-
-	if config.Thumb != nil {
-		files = append(files, RequestFile{
-			Name: "thumbnail",
-			Data: config.Thumb,
-		})
-	}
-
-	if config.Cover != nil {
-		files = append(files, RequestFile{
-			Name: "cover",
-			Data: config.Cover,
-		})
-	}
-	return files
+	return requestFiles(
+		requestFile("video", config.File),
+		requestFile("thumbnail", config.Thumb),
+		requestFile("cover", config.Cover),
+	)
 }
 
 // AnimationConfig contains information about a SendAnimation request.
@@ -892,19 +837,10 @@ func (config AnimationConfig) method() string {
 }
 
 func (config AnimationConfig) files() []RequestFile {
-	files := []RequestFile{{
-		Name: "animation",
-		Data: config.File,
-	}}
-
-	if config.Thumb != nil {
-		files = append(files, RequestFile{
-			Name: "thumbnail",
-			Data: config.Thumb,
-		})
-	}
-
-	return files
+	return requestFiles(
+		requestFile("animation", config.File),
+		requestFile("thumbnail", config.Thumb),
+	)
 }
 
 // VideoNoteConfig contains information about a SendVideoNote request.
@@ -929,19 +865,10 @@ func (config VideoNoteConfig) method() string {
 }
 
 func (config VideoNoteConfig) files() []RequestFile {
-	files := []RequestFile{{
-		Name: "video_note",
-		Data: config.File,
-	}}
-
-	if config.Thumb != nil {
-		files = append(files, RequestFile{
-			Name: "thumbnail",
-			Data: config.Thumb,
-		})
-	}
-
-	return files
+	return requestFiles(
+		requestFile("video_note", config.File),
+		requestFile("thumbnail", config.Thumb),
+	)
 }
 
 // Use this method to send paid media to channel chats. On success, the sent Message is returned.
@@ -1017,19 +944,10 @@ func (config VoiceConfig) method() string {
 }
 
 func (config VoiceConfig) files() []RequestFile {
-	files := []RequestFile{{
-		Name: "voice",
-		Data: config.File,
-	}}
-
-	if config.Thumb != nil {
-		files = append(files, RequestFile{
-			Name: "thumbnail",
-			Data: config.Thumb,
-		})
-	}
-
-	return files
+	return requestFiles(
+		requestFile("voice", config.File),
+		requestFile("thumbnail", config.Thumb),
+	)
 }
 
 // LocationConfig contains information about a SendLocation request.
@@ -1780,14 +1698,7 @@ func (config WebhookConfig) params() (Params, error) {
 }
 
 func (config WebhookConfig) files() []RequestFile {
-	if config.Certificate != nil {
-		return []RequestFile{{
-			Name: "certificate",
-			Data: config.Certificate,
-		}}
-	}
-
-	return nil
+	return requestFiles(requestFile("certificate", config.Certificate))
 }
 
 // DeleteWebhookConfig is a helper to delete a webhook.
@@ -3270,10 +3181,7 @@ func (config SetChatPhotoConfig) method() string {
 }
 
 func (config SetChatPhotoConfig) files() []RequestFile {
-	return []RequestFile{{
-		Name: "photo",
-		Data: config.File,
-	}}
+	return requestFiles(requestFile("photo", config.File))
 }
 
 // DeleteChatPhotoConfig allows you to delete a group, supergroup, or channel's photo.
@@ -3649,10 +3557,7 @@ func (config SetStickerSetThumbConfig) params() (Params, error) {
 }
 
 func (config SetStickerSetThumbConfig) files() []RequestFile {
-	return []RequestFile{{
-		Name: "thumbnail",
-		Data: config.Thumb,
-	}}
+	return requestFiles(requestFile("thumbnail", config.Thumb))
 }
 
 // SetChatStickerSetConfig allows you to set the sticker set for a supergroup.
@@ -4622,51 +4527,8 @@ func prepareInputMediaForParams(inputMedia []InputMedia) []InputMedia {
 }
 
 func prepareInputMediaForParamsWithPrefix(inputMedia []InputMedia, prefix string) []InputMedia {
-	newMedias := cloneMediaSlice(inputMedia)
-	for idx, media := range newMedias {
-		if media == nil {
-			continue
-		}
-
-		fileName := fmt.Sprintf("%s-%d", prefix, idx)
-		if input, ok := media.(*InputMediaLivePhoto); ok {
-			if input.Media != nil && input.Media.NeedsUpload() {
-				input.Media = fileAttach("attach://" + fileName)
-			}
-			if input.Photo != nil && input.Photo.NeedsUpload() {
-				input.Photo = fileAttach("attach://" + fileName + "-photo")
-			}
-			newMedias[idx] = input
-			continue
-		}
-		if paid, ok := media.(*InputPaidMedia); ok {
-			if paid.Photo != nil && paid.Photo.NeedsUpload() {
-				paid.Photo = fileAttach("attach://" + fileName + "-photo")
-			}
-			if livePhoto, ok := paid.Media.(*InputMediaLivePhoto); ok {
-				if livePhoto.Media != nil && livePhoto.Media.NeedsUpload() {
-					livePhoto.Media = fileAttach("attach://" + fileName)
-				}
-				if livePhoto.Photo != nil && livePhoto.Photo.NeedsUpload() {
-					livePhoto.Photo = fileAttach("attach://" + fileName + "-photo")
-				}
-				newMedias[idx] = paid
-				continue
-			}
-		}
-
-		if media.getMedia() != nil && media.getMedia().NeedsUpload() {
-			media.setUploadMedia("attach://" + fileName)
-		}
-
-		if thumb := media.getThumb(); thumb != nil && thumb.NeedsUpload() {
-			media.setUploadThumb("attach://" + fileName + "-thumb")
-		}
-
-		newMedias[idx] = media
-	}
-
-	return newMedias
+	prepared, _ := prepareInputMediaUploadPlan(inputMedia, prefix)
+	return prepared
 }
 
 // prepareInputMediaForFiles generates RequestFile objects for media items
@@ -4676,69 +4538,8 @@ func prepareInputMediaForFiles(inputMedia []InputMedia) []RequestFile {
 }
 
 func prepareInputMediaForFilesWithPrefix(inputMedia []InputMedia, prefix string) []RequestFile {
-	files := []RequestFile{}
-
-	for idx, media := range inputMedia {
-		if media == nil {
-			continue
-		}
-
-		fileName := fmt.Sprintf("%s-%d", prefix, idx)
-		if input, ok := media.(*InputMediaLivePhoto); ok {
-			if input.Media != nil && input.Media.NeedsUpload() {
-				files = append(files, RequestFile{
-					Name: fileName,
-					Data: input.Media,
-				})
-			}
-			if input.Photo != nil && input.Photo.NeedsUpload() {
-				files = append(files, RequestFile{
-					Name: fileName + "-photo",
-					Data: input.Photo,
-				})
-			}
-			continue
-		}
-		if paid, ok := media.(*InputPaidMedia); ok {
-			if paid.Photo != nil && paid.Photo.NeedsUpload() {
-				files = append(files, RequestFile{
-					Name: fileName + "-photo",
-					Data: paid.Photo,
-				})
-			}
-			if livePhoto, ok := paid.Media.(*InputMediaLivePhoto); ok {
-				if livePhoto.Media != nil && livePhoto.Media.NeedsUpload() {
-					files = append(files, RequestFile{
-						Name: fileName,
-						Data: livePhoto.Media,
-					})
-				}
-				if livePhoto.Photo != nil && livePhoto.Photo.NeedsUpload() {
-					files = append(files, RequestFile{
-						Name: fileName + "-photo",
-						Data: livePhoto.Photo,
-					})
-				}
-				continue
-			}
-		}
-
-		if media.getMedia() != nil && media.getMedia().NeedsUpload() {
-			files = append(files, RequestFile{
-				Name: fileName,
-				Data: media.getMedia(),
-			})
-		}
-
-		if thumb := media.getThumb(); thumb != nil && thumb.NeedsUpload() {
-			files = append(files, RequestFile{
-				Name: fileName + "-thumb",
-				Data: thumb,
-			})
-		}
-	}
-
-	return files
+	_, plan := prepareInputMediaUploadPlan(inputMedia, prefix)
+	return plan.Files()
 }
 
 func prepareInputPollOptionsForParams(options []InputPollOption) []InputPollOption {
@@ -4768,55 +4569,23 @@ func prepareInputPollOptionsForFiles(options []InputPollOption) []RequestFile {
 }
 
 func prepareInputProfilePhotoForParams(photo InputProfilePhoto) InputProfilePhoto {
-	cloned := cloneInputProfilePhoto(photo)
-	if cloned == nil {
-		return nil
-	}
-	if media := cloned.getMedia(); media != nil && media.NeedsUpload() {
-		cloned.setUploadMedia("attach://file-0")
-	}
-
-	return cloned
+	prepared, _ := prepareInputProfilePhotoUploadPlan(photo)
+	return prepared
 }
 
 func prepareInputProfilePhotoForFiles(photo InputProfilePhoto) []RequestFile {
-	if photo == nil {
-		return nil
-	}
-	if media := photo.getMedia(); media != nil && media.NeedsUpload() {
-		return []RequestFile{{
-			Name: "file-0",
-			Data: media,
-		}}
-	}
-
-	return nil
+	_, plan := prepareInputProfilePhotoUploadPlan(photo)
+	return plan.Files()
 }
 
 func prepareInputStoryContentForParams(content InputStoryContent) InputStoryContent {
-	cloned := cloneInputStoryContent(content)
-	if cloned == nil {
-		return nil
-	}
-	if media := cloned.getMedia(); media != nil && media.NeedsUpload() {
-		cloned.setUploadMedia("attach://file-0")
-	}
-
-	return cloned
+	prepared, _ := prepareInputStoryContentUploadPlan(content)
+	return prepared
 }
 
 func prepareInputStoryContentForFiles(content InputStoryContent) []RequestFile {
-	if content == nil {
-		return nil
-	}
-	if media := content.getMedia(); media != nil && media.NeedsUpload() {
-		return []RequestFile{{
-			Name: "file-0",
-			Data: media,
-		}}
-	}
-
-	return nil
+	_, plan := prepareInputStoryContentUploadPlan(content)
+	return plan.Files()
 }
 
 func ptr[T any](v T) *T {
@@ -4892,6 +4661,8 @@ func cloneInputMedia(media InputMedia) InputMedia {
 			Type:              m.Type,
 			Photo:             m.Photo,
 			Thumb:             m.Thumb,
+			Cover:             m.Cover,
+			StartTimestamp:    m.StartTimestamp,
 			Width:             m.Width,
 			Height:            m.Height,
 			Duration:          m.Duration,
@@ -4915,6 +4686,8 @@ func cloneInputMedia(media InputMedia) InputMedia {
 				Type:              m.Media.Type,
 				Photo:             m.Media.Photo,
 				Thumb:             m.Media.Thumb,
+				Cover:             m.Media.Cover,
+				StartTimestamp:    m.Media.StartTimestamp,
 				Width:             m.Media.Width,
 				Height:            m.Media.Height,
 				Duration:          m.Media.Duration,

@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strings"
@@ -104,19 +103,29 @@ func (bot *BotAPI) MakeRequest(endpoint string, params Params) (*APIResponse, er
 }
 
 func (bot *BotAPI) MakeRequestWithContext(ctx context.Context, endpoint string, params Params) (*APIResponse, error) {
+	return bot.executeRequest(ctx, endpoint, buildFormPayload(params), requestDebug{params: params})
+}
+
+func (bot *BotAPI) executeRequest(ctx context.Context, endpoint string, payload requestPayload, debugInfo requestDebug) (*APIResponse, error) {
+	defer payload.close()
+
 	if bot.Debug {
-		log.Printf("Endpoint: %s, params: %v\n", endpoint, params)
+		if debugInfo.fileCount > 0 {
+			log.Printf("Endpoint: %s, params: %v, with %d files\n", endpoint, debugInfo.params, debugInfo.fileCount)
+		} else {
+			log.Printf("Endpoint: %s, params: %v\n", endpoint, debugInfo.params)
+		}
 	}
 
 	method := fmt.Sprintf(bot.apiEndpoint, bot.Token, endpoint)
 
-	values := buildParams(params)
-
-	req, err := http.NewRequestWithContext(ctx, "POST", method, strings.NewReader(values.Encode()))
+	req, err := http.NewRequestWithContext(ctx, "POST", method, payload.body)
 	if err != nil {
 		return &APIResponse{}, err
 	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if payload.contentType != "" {
+		req.Header.Set("Content-Type", payload.contentType)
+	}
 
 	resp, err := bot.Client.Do(req)
 	if err != nil {
@@ -181,101 +190,15 @@ func (bot *BotAPI) UploadFiles(endpoint string, params Params, files []RequestFi
 }
 
 func (bot *BotAPI) UploadFilesWithContext(ctx context.Context, endpoint string, params Params, files []RequestFile) (*APIResponse, error) {
-	r, w := io.Pipe()
-	m := multipart.NewWriter(w)
-
-	// This code modified from the very helpful @HirbodBehnam
-	// https://github.com/go-telegram-bot-api/telegram-bot-api/issues/354#issuecomment-663856473
-	go func() {
-		defer w.Close()
-		defer m.Close()
-
-		for field, value := range params {
-			if err := m.WriteField(field, value); err != nil {
-				w.CloseWithError(err)
-				return
-			}
-		}
-
-		for _, file := range files {
-			if file.Data.NeedsUpload() {
-				name, reader, err := file.Data.UploadData()
-				if err != nil {
-					w.CloseWithError(err)
-					return
-				}
-
-				part, err := m.CreateFormFile(file.Name, name)
-				if err != nil {
-					w.CloseWithError(err)
-					return
-				}
-
-				if _, err := io.Copy(part, reader); err != nil {
-					w.CloseWithError(err)
-					return
-				}
-
-				if closer, ok := reader.(io.ReadCloser); ok {
-					if err = closer.Close(); err != nil {
-						w.CloseWithError(err)
-						return
-					}
-				}
-			} else {
-				value := file.Data.SendData()
-
-				if err := m.WriteField(file.Name, value); err != nil {
-					w.CloseWithError(err)
-					return
-				}
-			}
-		}
-	}()
-
-	if bot.Debug {
-		log.Printf("Endpoint: %s, params: %v, with %d files\n", endpoint, params, len(files))
-	}
-
-	method := fmt.Sprintf(bot.apiEndpoint, bot.Token, endpoint)
-
-	req, err := http.NewRequestWithContext(ctx, "POST", method, r)
+	payload, err := buildMultipartPayload(params, files)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Set("Content-Type", m.FormDataContentType())
-
-	resp, err := bot.Client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	var apiResp APIResponse
-	bytes, err := bot.decodeAPIResponse(resp.Body, &apiResp)
-	if err != nil {
-		return &apiResp, err
-	}
-
-	if bot.Debug {
-		log.Printf("Endpoint: %s, response: %s\n", endpoint, string(bytes))
-	}
-
-	if !apiResp.Ok {
-		var parameters ResponseParameters
-
-		if apiResp.Parameters != nil {
-			parameters = *apiResp.Parameters
-		}
-
-		return &apiResp, &Error{
-			Message:            apiResp.Description,
-			ResponseParameters: parameters,
-		}
-	}
-
-	return &apiResp, nil
+	return bot.executeRequest(ctx, endpoint, payload, requestDebug{
+		params:    params,
+		fileCount: len(files),
+	})
 }
 
 // GetFileDirectURL returns direct URL to file
@@ -318,16 +241,6 @@ func (bot *BotAPI) IsMessageToMe(message Message) bool {
 	return strings.Contains(message.Text, "@"+bot.Self.UserName)
 }
 
-func hasFilesNeedingUpload(files []RequestFile) bool {
-	for _, file := range files {
-		if file.Data != nil && file.Data.NeedsUpload() {
-			return true
-		}
-	}
-
-	return false
-}
-
 // Request sends a Chattable to Telegram, and returns the APIResponse.
 func (bot *BotAPI) Request(c Chattable) (*APIResponse, error) {
 	return bot.RequestWithContext(context.Background(), c)
@@ -340,21 +253,11 @@ func (bot *BotAPI) RequestWithContext(ctx context.Context, c Chattable) (*APIRes
 	}
 
 	if t, ok := c.(Fileable); ok {
-		files := t.files()
+		plan := uploadPlanFromFiles(t.files())
+		params = plan.Apply(params)
 
-		// If we have files that need to be uploaded, we should delegate the
-		// request to UploadFile.
-		if hasFilesNeedingUpload(files) {
-			return bot.UploadFiles(t.method(), params, files)
-		}
-
-		// However, if there are no files to be uploaded, there's likely things
-		// that need to be turned into params instead.
-		for _, file := range files {
-			if file.Data == nil {
-				continue
-			}
-			params[file.Name] = file.Data.SendData()
+		if plan.NeedsUpload() {
+			return bot.UploadFilesWithContext(ctx, t.method(), params, plan.Files())
 		}
 	}
 
@@ -676,9 +579,11 @@ func WriteToHTTPResponse(w http.ResponseWriter, c Chattable) error {
 	}
 
 	if t, ok := c.(Fileable); ok {
-		if hasFilesNeedingUpload(t.files()) {
+		plan := uploadPlanFromFiles(t.files())
+		if plan.NeedsUpload() {
 			return errors.New("unable to use http response to upload files")
 		}
+		params = plan.Apply(params)
 	}
 
 	values := buildParams(params)

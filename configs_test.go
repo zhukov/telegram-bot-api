@@ -225,6 +225,26 @@ func TestPaidMediaLivePhotoSerialization(t *testing.T) {
 	}
 }
 
+func TestPaidMediaVideoMetadataSurvivesUploadPreparation(t *testing.T) {
+	video := NewInputMediaVideo(FilePath("tests/video.mp4"))
+	paid := NewInputPaidMediaVideo(&video)
+	paid.Cover = "cover-file-id"
+	paid.StartTimestamp = 12
+
+	prepared := prepareInputMediaForParams([]InputMedia{&paid})
+	if len(prepared) != 1 {
+		t.Fatalf("unexpected prepared media: %+v", prepared)
+	}
+
+	params := Params{}
+	if err := params.AddInterface("media", prepared[0]); err != nil {
+		t.Fatalf("marshal prepared media: %v", err)
+	}
+	if !strings.Contains(params["media"], `"cover":"cover-file-id"`) || !strings.Contains(params["media"], `"start_timestamp":12`) {
+		t.Fatalf("paid media metadata was not preserved: %s", params["media"])
+	}
+}
+
 func TestManagedBotAccessSettingsConfigFalseParam(t *testing.T) {
 	config := NewSetManagedBotAccessSettings(42, false, 1, 2)
 
